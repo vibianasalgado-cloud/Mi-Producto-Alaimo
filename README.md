@@ -1,1 +1,1 @@
-Crédito en comercios: pretende enseñarles a los clientes cómo usar el producto, para qué sirve y en qué comercios aplica, para clientes Nequi que necesiten una opción de financiación.
+[credito en comercios]: [pretende ensenar a los clientes como usar el producto, para que sirve, en que comercios] para [clientes nequi que necesiten una opcion de financiacion].
