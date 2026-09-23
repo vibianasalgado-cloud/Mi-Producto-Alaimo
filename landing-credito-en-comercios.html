@@ -5,6 +5,15 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Crédito en comercios</title>
 <meta name="description" content="Landing que enseña a los clientes Nequi cómo, dónde y para qué usar el Crédito en comercios.">
+<script>
+(function(){
+  try{
+    var stored = localStorage.getItem('nequi-theme');
+    var theme = stored || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light');
+    document.documentElement.setAttribute('data-theme', theme);
+  }catch(e){}
+})();
+</script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -23,8 +32,20 @@
     --blue:#5A9EFB;
     --line:rgba(27,2,33,0.13);
     --line-dark:rgba(255,255,255,0.14);
+    --surface:#FFFFFF;
+    --header-bg:rgba(251,244,248,0.88);
     --radius:20px;
     --maxw:1120px;
+  }
+
+  :root[data-theme="dark"]{
+    --paper:#150116;
+    --paper-dim:#20101F;
+    --ink:#F6EAF4;
+    --ink-soft:#BB9EBC;
+    --line:rgba(255,255,255,0.14);
+    --surface:#241228;
+    --header-bg:rgba(21,1,22,0.88);
   }
 
   *{box-sizing:border-box;}
@@ -35,6 +56,7 @@
     font-family:'Manrope',-apple-system,BlinkMacSystemFont,sans-serif;
     -webkit-font-smoothing:antialiased;
     padding-inline:20px;
+    transition:background-color .2s ease, color .2s ease;
   }
   img{max-width:100%;}
   h1,h2,h3{text-wrap:balance;margin:0;}
@@ -61,11 +83,12 @@
     position:sticky;
     top:0;
     z-index:20;
-    background:rgba(251,244,248,0.88);
+    background:var(--header-bg);
     backdrop-filter:blur(10px);
     border-bottom:1px solid var(--line);
     margin-inline:-20px;
     padding-inline:20px;
+    transition:background-color .2s ease, border-color .2s ease;
   }
   .nav{
     max-width:var(--maxw);
@@ -119,6 +142,23 @@
   }
   .nav-links a{text-decoration:none;}
   .nav-links a:hover{color:var(--ink);}
+  .nav-actions{display:flex;align-items:center;gap:10px;}
+  .theme-toggle{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:38px;height:38px;border-radius:50%;flex-shrink:0;
+    border:1.5px solid var(--line);
+    background:var(--surface);
+    color:var(--ink);
+    cursor:pointer;
+    padding:0;
+    transition:background-color .2s ease, border-color .2s ease, color .2s ease;
+  }
+  .theme-toggle:hover{border-color:var(--magenta);}
+  .theme-toggle:focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
+  .theme-toggle svg{width:18px;height:18px;}
+  .theme-toggle .icon-moon{display:none;}
+  :root[data-theme="dark"] .theme-toggle .icon-sun{display:none;}
+  :root[data-theme="dark"] .theme-toggle .icon-moon{display:block;}
   .btn{
     display:inline-flex;
     align-items:center;
@@ -221,8 +261,11 @@
   .blob1{width:260px;height:260px;background:radial-gradient(circle,var(--magenta),transparent 70%);top:-80px;right:-40px;}
   .blob2{width:180px;height:180px;background:radial-gradient(circle,var(--blue),transparent 70%);bottom:-60px;right:220px;opacity:.35;}
 
-  /* phone mockup */
+  /* phone mockup: siempre se muestra con los tonos claros del screenshot, sin importar el tema */
   .phone{
+    --ink:#1B0221;
+    --ink-soft:#6E5A72;
+    --line:rgba(27,2,33,0.13);
     position:relative;
     justify-self:center;
     width:min(280px,90%);
@@ -267,6 +310,7 @@
     padding:.35em .7em;border-radius:8px;
     box-shadow:0 8px 18px -6px rgba(0,0,0,0.4);
   }
+
   /* ---------- generic section ---------- */
   section{padding-block:64px;}
   .section-head{max-width:640px;margin-bottom:40px;}
@@ -280,8 +324,9 @@
   /* where to use */
   .where-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
   .where-card{
-    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
     padding:28px;display:flex;flex-direction:column;gap:14px;
+    transition:background-color .2s ease, border-color .2s ease;
   }
   .where-icon{
     width:48px;height:48px;border-radius:12px;
@@ -314,7 +359,8 @@
   .steps-datafono{grid-template-columns:repeat(3,1fr);}
   .step{
     border:1px solid var(--line);border-radius:var(--radius);
-    padding:24px 20px;background:#fff;position:relative;
+    padding:24px 20px;background:var(--surface);position:relative;
+    transition:background-color .2s ease, border-color .2s ease;
   }
   .step .num{
     font-size:.78rem;font-weight:800;color:var(--magenta);
@@ -345,8 +391,9 @@
   /* payment terms */
   .payment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
   .payment-card{
-    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);
     padding:28px;display:flex;flex-direction:column;gap:14px;
+    transition:background-color .2s ease, border-color .2s ease;
   }
   .payment-icon{
     width:48px;height:48px;border-radius:12px;
@@ -424,7 +471,7 @@
       position:absolute;
       top:100%;left:0;right:0;
       flex-direction:column;
-      background:#fff;
+      background:var(--surface);
       border:1px solid var(--line);
       border-top:none;
       border-radius:0 0 16px 16px;
@@ -466,12 +513,19 @@
     <input type="checkbox" id="nav-toggle" class="nav-toggle-input">
     <nav class="nav-links">
       <a href="#donde-usar">Dónde usarlo</a>
+      <a href="#tu-dinero">Tu dinero</a>
       <a href="#como-funciona">Cómo funciona</a>
       <a href="#forma-de-pago">Forma de pago</a>
       <a href="#comercios">Comercios aliados</a>
       <a href="#preguntas">Preguntas</a>
     </nav>
-    <a class="btn btn-primary btn-nav" href="#activar">Actívalo</a>
+    <div class="nav-actions">
+      <button type="button" class="theme-toggle" id="theme-toggle" aria-label="Cambiar a modo oscuro" aria-pressed="false">
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="4.2" stroke="currentColor" stroke-width="1.8"/><path d="M12 2.5v2.4M12 19.1v2.4M4.6 4.6l1.7 1.7M17.7 17.7l1.7 1.7M2.5 12h2.4M19.1 12h2.4M4.6 19.4l1.7-1.7M17.7 6.3l1.7-1.7" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M20 14.2A8.5 8.5 0 1 1 9.8 4a6.8 6.8 0 0 0 10.2 10.2z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      </button>
+      <a class="btn btn-primary btn-nav" href="#activar">Actívalo</a>
+    </div>
   </div>
 </header>
 
@@ -554,6 +608,46 @@
     </div>
   </section>
 
+  <section id="tu-dinero">
+    <div class="section-head">
+      <span class="kicker">¿A dónde va tu dinero?</span>
+      <h2>Nequi le paga al comercio. A ti no te llega ese dinero</h2>
+      <p>Es la duda más común sobre este crédito, así que vamos directo al punto: tu cupo nunca pasa por tu cuenta ni por tu Disponible.</p>
+    </div>
+    <div class="payment-grid">
+      <div class="payment-card">
+        <div class="payment-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M3 12h13M11 6l5 6-5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><rect x="17" y="4" width="4" height="16" rx="1" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <h3>El pago va directo al comercio</h3>
+        <p>
+          Apenas confirmas tu compra, Nequi le transfiere al comercio el 100% del valor,
+          de una sola vez. Para el comercio es un pago normal, como cualquier venta.
+        </p>
+      </div>
+      <div class="payment-card">
+        <div class="payment-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="5" width="18" height="14" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M8 15.5l2.2-2.6L12.5 15l3.5-4.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M8 9h.01" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Tú no recibes el dinero</h3>
+        <p>
+          El cupo aprobado no entra a tu Disponible ni a ninguna otra cuenta tuya:
+          se usa únicamente para pagarle al comercio en el momento exacto de la compra.
+        </p>
+      </div>
+      <div class="payment-card">
+        <div class="payment-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2.5v3M16 2.5v3M7.5 14h9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Tu deuda queda con Nequi</h3>
+        <p>
+          Lo que debes por esa compra es con Nequi, no con el comercio. Por eso pagas tus
+          cuotas dentro de la app y el comercio no vuelve a intervenir en tu pago.
+        </p>
+      </div>
+    </div>
+  </section>
+
   <section>
     <div class="stats">
       <div class="stat-tile accent">
@@ -570,6 +664,7 @@
       </div>
     </div>
   </section>
+
   <section id="como-funciona">
     <div class="section-head">
       <span class="kicker">Cómo funciona</span>
@@ -661,9 +756,9 @@
         </div>
         <h3>Cuotas mensuales</h3>
         <p>
-          Tu compra se divide en el número de cuotas que elegiste y pagas una cada mes,
-          en la misma fecha de pago de tu Crédito en comercios.
-          <span class="revisar">REVISAR: fecha de corte y pago</span>
+          Apenas tu compra queda confirmada con éxito, tu Crédito en comercios se activa
+          y tu fecha de pago se fija en ese momento: el mismo día de tu compra, 30 días después.
+          Por ejemplo, si compras el 8, tu primera cuota vence el 8 del mes siguiente, y así cada mes.
         </p>
       </div>
       <div class="payment-card">
@@ -690,6 +785,7 @@
       </div>
     </div>
   </section>
+
   <section id="comercios">
     <div class="section-head">
       <span class="kicker">Comercios aliados</span>
@@ -732,7 +828,11 @@
       </details>
       <details>
         <summary>¿El dinero me llega a mí o se lo pagan directo al comercio?</summary>
-        <p>No pasa por tu cuenta ni tienes que darle nada al comercio por fuera: en el momento de la compra, Nequi le paga directamente al comercio el valor total. A ti solo te queda esa compra reflejada en cuotas dentro de tu Crédito en comercios. <span class="revisar">REVISAR con Producto</span></p>
+        <p>No pasa por tu cuenta ni tienes que darle nada al comercio por fuera: en el momento de la compra, Nequi le paga directamente al comercio el valor total. A ti solo te queda esa compra reflejada en cuotas dentro de tu Crédito en comercios.</p>
+      </details>
+      <details>
+        <summary>¿Cuándo queda activo mi crédito y cuál es mi fecha de pago?</summary>
+        <p>Tu Crédito en comercios queda activo en el momento en que tu compra se confirma con éxito. Ahí mismo se fija tu fecha de pago: el mismo día de tu compra, 30 días después. Puedes verla junto con el valor de tu cuota dentro de la app.</p>
       </details>
       <details>
         <summary>¿Cuál es la compra mínima para usarlo?</summary>
@@ -748,7 +848,7 @@
       </details>
       <details>
         <summary>¿Cómo se paga cada cuota?</summary>
-        <p>Tus cuotas son mensuales y se descuentan automáticamente de tu disponible en Nequi el día de tu fecha de pago, sin que tengas que hacer nada. <span class="revisar">REVISAR: fecha de corte y pago</span></p>
+        <p>Tus cuotas son mensuales y se descuentan automáticamente de tu disponible en Nequi el día de tu fecha de pago, sin que tengas que hacer nada.</p>
       </details>
       <details>
         <summary>¿Puedo abonar a capital para pagar más rápido?</summary>
@@ -788,5 +888,25 @@
     el producto y están sujetos a aprobación. <span class="revisar">REVISAR con Legal/Producto</span>
   </p>
 </footer>
+
+<script>
+(function(){
+  var btn = document.getElementById('theme-toggle');
+  if(!btn) return;
+  function syncButton(){
+    var isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    btn.setAttribute('aria-pressed', String(isDark));
+    btn.setAttribute('aria-label', isDark ? 'Cambiar a modo claro' : 'Cambiar a modo oscuro');
+  }
+  syncButton();
+  btn.addEventListener('click', function(){
+    var current = document.documentElement.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+    var next = current === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    try{ localStorage.setItem('nequi-theme', next); }catch(e){}
+    syncButton();
+  });
+})();
+</script>
 </body>
 </html>
