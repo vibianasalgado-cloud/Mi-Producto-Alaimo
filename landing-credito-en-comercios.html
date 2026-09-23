@@ -75,16 +75,41 @@
     justify-content:space-between;
     gap:16px;
     padding-block:16px;
+    position:relative;
   }
-  .wordmark{
+  .nav-left{
     display:flex;
     align-items:center;
-    gap:2px;
+    gap:12px;
+  }
+  .nav-toggle-input{display:none;}
+  .nav-toggle-btn{
+    display:none;
+    flex-direction:column;
+    justify-content:center;
+    gap:5px;
+    width:36px;height:36px;
+    cursor:pointer;
+    background:none;border:none;padding:0;
+  }
+  .nav-toggle-btn span{display:block;width:22px;height:2px;background:var(--ink);border-radius:2px;}
+  .wordmark{
+    display:flex;
+    align-items:flex-start;
+    gap:5px;
     font-weight:800;
     font-size:1.3rem;
     color:var(--ink);
+    letter-spacing:-0.01em;
   }
-  .wordmark .dot{color:var(--magenta);}
+  .wordmark .dot{
+    width:.32em;
+    height:.32em;
+    margin-top:.08em;
+    border-radius:2px;
+    background:var(--magenta);
+    flex-shrink:0;
+  }
   .nav-links{
     display:flex;
     gap:28px;
@@ -242,7 +267,6 @@
     padding:.35em .7em;border-radius:8px;
     box-shadow:0 8px 18px -6px rgba(0,0,0,0.4);
   }
-
   /* ---------- generic section ---------- */
   section{padding-block:64px;}
   .section-head{max-width:640px;margin-bottom:40px;}
@@ -287,6 +311,7 @@
   .steps{
     display:grid;grid-template-columns:repeat(4,1fr);gap:18px;counter-reset:step;
   }
+  .steps-datafono{grid-template-columns:repeat(3,1fr);}
   .step{
     border:1px solid var(--line);border-radius:var(--radius);
     padding:24px 20px;background:#fff;position:relative;
@@ -300,6 +325,38 @@
   }
   .step h3{font-size:1rem;font-weight:800;margin-bottom:8px;}
   .step p{font-size:.88rem;color:var(--ink-soft);line-height:1.5;}
+
+  /* security banner */
+  .security-banner{
+    margin-top:20px;
+    background:var(--plum-900);color:#fff;
+    border-radius:var(--radius);
+    padding:26px 28px;
+    display:flex;align-items:center;gap:20px;
+  }
+  .security-icon{
+    width:52px;height:52px;border-radius:14px;flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(218,0,129,0.22);color:#FBBEDE;
+  }
+  .security-banner h3{font-size:1.05rem;font-weight:800;}
+  .security-banner p{font-size:.9rem;color:rgba(255,255,255,0.75);line-height:1.55;margin-top:6px;max-width:60ch;}
+
+  /* payment terms */
+  .payment-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;}
+  .payment-card{
+    background:#fff;border:1px solid var(--line);border-radius:var(--radius);
+    padding:28px;display:flex;flex-direction:column;gap:14px;
+  }
+  .payment-icon{
+    width:48px;height:48px;border-radius:12px;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(218,0,129,0.1);color:var(--magenta);
+  }
+  .payment-card:nth-child(2) .payment-icon{background:rgba(90,158,251,0.16);color:#2F6FE0;}
+  .payment-card:nth-child(3) .payment-icon{background:rgba(165,0,95,0.12);color:var(--magenta-deep);}
+  .payment-card h3{font-size:1.05rem;font-weight:800;}
+  .payment-card p{color:var(--ink-soft);font-size:.92rem;line-height:1.55;}
 
   /* merchants */
   .merchants-note{font-size:.82rem;color:var(--ink-soft);margin-top:6px;}
@@ -359,11 +416,39 @@
     .where-grid{grid-template-columns:1fr;}
     .stats{grid-template-columns:1fr;}
     .steps{grid-template-columns:1fr 1fr;}
+    .steps-datafono{grid-template-columns:1fr 1fr;}
+    .payment-grid{grid-template-columns:1fr;}
     .logo-grid{grid-template-columns:repeat(3,1fr);}
-    .nav-links{display:none;}
+    .nav-links{
+      display:flex;
+      position:absolute;
+      top:100%;left:0;right:0;
+      flex-direction:column;
+      background:#fff;
+      border:1px solid var(--line);
+      border-top:none;
+      border-radius:0 0 16px 16px;
+      padding:8px 20px 20px;
+      gap:14px;
+      max-height:0;
+      overflow:hidden;
+      opacity:0;
+      pointer-events:none;
+      transition:max-height .25s ease, opacity .2s ease;
+      box-shadow:0 20px 30px -20px rgba(27,2,33,0.25);
+    }
+    .nav-toggle-input:checked ~ .nav-links{
+      max-height:320px;
+      opacity:1;
+      pointer-events:auto;
+    }
+    .nav-links a{padding-block:.3em;}
+    .nav-toggle-btn{display:flex;}
+    .security-banner{flex-direction:column;align-items:flex-start;text-align:left;}
   }
   @media (max-width:480px){
     .steps{grid-template-columns:1fr;}
+    .steps-datafono{grid-template-columns:1fr;}
     .logo-grid{grid-template-columns:repeat(2,1fr);}
   }
 </style>
@@ -372,10 +457,17 @@
 
 <header class="site">
   <div class="nav">
-    <div class="wordmark">nequi<span class="dot">.</span></div>
+    <div class="nav-left">
+      <label for="nav-toggle" class="nav-toggle-btn" aria-label="Abrir menú">
+        <span></span><span></span><span></span>
+      </label>
+      <div class="wordmark"><span class="dot"></span>Nequi</div>
+    </div>
+    <input type="checkbox" id="nav-toggle" class="nav-toggle-input">
     <nav class="nav-links">
       <a href="#donde-usar">Dónde usarlo</a>
       <a href="#como-funciona">Cómo funciona</a>
+      <a href="#forma-de-pago">Forma de pago</a>
       <a href="#comercios">Comercios aliados</a>
       <a href="#preguntas">Preguntas</a>
     </nav>
@@ -478,37 +570,126 @@
       </div>
     </div>
   </section>
-
   <section id="como-funciona">
     <div class="section-head">
       <span class="kicker">Cómo funciona</span>
-      <h2>Del carrito de compras a tu Plan de pagos, en 4 pasos</h2>
-      <p>El mismo camino aplica si estás frente al datáfono o pagando desde tu celular.</p>
+      <h2>Así compras con tu Crédito en comercios en el datáfono Redeban</h2>
+      <p>Sin claves que memorizar ni tarjetas adicionales: todo pasa dentro de tu Nequi, en segundos.</p>
+    </div>
+    <div class="steps steps-datafono">
+      <div class="step">
+        <span class="num">01</span>
+        <h3>Pagas en el datáfono</h3>
+        <p>El comercio pasa tu compra por el datáfono Redeban, como cualquier pago con tarjeta.</p>
+      </div>
+      <div class="step">
+        <span class="num">02</span>
+        <h3>Te llega la notificación</h3>
+        <p>En segundos, te llega una notificación a tu Nequi para confirmar la compra.</p>
+      </div>
+      <div class="step">
+        <span class="num">03</span>
+        <h3>Aceptas la notificación</h3>
+        <p>Abres la notificación y aceptas para seguir con tu pago.</p>
+      </div>
+      <div class="step">
+        <span class="num">04</span>
+        <h3>Eliges cómo pagar</h3>
+        <p>Seleccionas si pagas con tu Crédito en comercios o con tu Disponible.</p>
+      </div>
+      <div class="step">
+        <span class="num">05</span>
+        <h3>Eliges tus cuotas</h3>
+        <p>Si pagas con crédito, escoges en cuántas cuotas quieres pagar tu compra.</p>
+      </div>
+      <div class="step">
+        <span class="num">06</span>
+        <h3>Confirmas con tu rostro</h3>
+        <p>Te pedimos una validación de biometría facial para confirmar que eres tú.</p>
+      </div>
+    </div>
+
+    <div class="security-banner">
+      <div class="security-icon">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M12 3l7 3v5c0 4.6-3 8.4-7 10-4-1.6-7-5.4-7-10V6l7-3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2 2 4-4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      </div>
+      <div>
+        <h3>¡Listo, así de fácil! Cuidamos tu seguridad</h3>
+        <p>Antes de confirmar cualquier compra con tu Crédito en comercios, siempre verificamos que eres tú con biometría facial. Así protegemos tu cupo, aunque alguien más tenga tu celular o esté frente al datáfono.</p>
+      </div>
+    </div>
+
+    <div class="section-head" style="margin-top:56px;">
+      <span class="kicker">Y si compras en línea</span>
+      <h2>Así compras con tu Crédito en comercios en tiendas online</h2>
+      <p>El mismo crédito, en cuatro pasos, sin pasar por ningún datáfono.</p>
     </div>
     <div class="steps">
       <div class="step">
         <span class="num">01</span>
-        <h3>Actívalo en la app</h3>
-        <p>Entra a Nequi, busca Crédito en comercios y actívalo con tu cupo disponible.<span class="revisar">REVISAR</span></p>
+        <h3>Llegas a pagar</h3>
+        <p>En el checkout de la tienda online, busca el botón de Nequi entre los medios de pago.</p>
       </div>
       <div class="step">
         <span class="num">02</span>
-        <h3>Elige dónde pagar</h3>
-        <p>Un comercio con datáfono Redeban o una tienda online con el botón Nequi.</p>
+        <h3>Eliges cómo pagar</h3>
+        <p>Selecciona pagar con tu Crédito en comercios entre las opciones de pago de Nequi.</p>
       </div>
       <div class="step">
         <span class="num">03</span>
-        <h3>Selecciona tus cuotas</h3>
-        <p>Escoge cuántas cuotas quieres pagar antes de confirmar la compra.</p>
+        <h3>Eliges tus cuotas</h3>
+        <p>Escoges en cuántas cuotas quieres pagar esa compra, igual que en el datáfono.</p>
       </div>
       <div class="step">
         <span class="num">04</span>
-        <h3>Listo, ya compraste</h3>
-        <p>Tu compra y tus cuotas quedan registradas en el Plan de pagos de tu app.<span class="revisar">REVISAR</span></p>
+        <h3>Confirmas con tu rostro</h3>
+        <p>Validamos con biometría facial y la tienda recibe la confirmación de tu pago al instante.</p>
       </div>
     </div>
   </section>
 
+  <section id="forma-de-pago">
+    <div class="section-head">
+      <span class="kicker">Forma de pago</span>
+      <h2>Tu crédito, pagado a tu manera</h2>
+      <p>Así se descuentan tus cuotas cada mes, sin que tengas que hacer nada extra.</p>
+    </div>
+    <div class="payment-grid">
+      <div class="payment-card">
+        <div class="payment-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><rect x="3" y="4" width="18" height="17" rx="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M3 9h18M8 2.5v3M16 2.5v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <h3>Cuotas mensuales</h3>
+        <p>
+          Tu compra se divide en el número de cuotas que elegiste y pagas una cada mes,
+          en la misma fecha de pago de tu Crédito en comercios.
+          <span class="revisar">REVISAR: fecha de corte y pago</span>
+        </p>
+      </div>
+      <div class="payment-card">
+        <div class="payment-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3v18M7 8l5-5 5 5M7 16l5 5 5-5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Puedes abonar a capital</h3>
+        <p>
+          Si quieres pagar más rápido, puedes hacer abonos extra a capital cuando quieras
+          desde la app y así reducir tus cuotas pendientes o el plazo de tu crédito.
+          <span class="revisar">REVISAR: dónde se hace el abono en la app</span>
+        </p>
+      </div>
+      <div class="payment-card">
+        <div class="payment-icon">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 7v5l3.5 2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </div>
+        <h3>Débito automático</h3>
+        <p>
+          El día de tu fecha de pago, la cuota se descuenta automáticamente de tu disponible
+          en Nequi. Solo asegúrate de tener el saldo listo ese día.
+          <span class="revisar">REVISAR: qué pasa si no hay saldo suficiente</span>
+        </p>
+      </div>
+    </div>
+  </section>
   <section id="comercios">
     <div class="section-head">
       <span class="kicker">Comercios aliados</span>
@@ -550,12 +731,28 @@
         <p>En cualquier comercio físico con datáfono Redeban y en comercios digitales que muestren el botón de Nequi en su pasarela de pago.</p>
       </details>
       <details>
+        <summary>¿El dinero me llega a mí o se lo pagan directo al comercio?</summary>
+        <p>No pasa por tu cuenta ni tienes que darle nada al comercio por fuera: en el momento de la compra, Nequi le paga directamente al comercio el valor total. A ti solo te queda esa compra reflejada en cuotas dentro de tu Crédito en comercios. <span class="revisar">REVISAR con Producto</span></p>
+      </details>
+      <details>
         <summary>¿Cuál es la compra mínima para usarlo?</summary>
         <p>Puedes pagar con tu Crédito en comercios desde compras de $50.000 COP en adelante.</p>
       </details>
       <details>
         <summary>¿Puedo elegir el número de cuotas?</summary>
         <p>Sí, tú decides en cuántas cuotas prefieres pagar tu compra antes de confirmarla. <span class="revisar">REVISAR: opciones exactas de cuotas</span></p>
+      </details>
+      <details>
+        <summary>¿Cómo protegen mi compra en el datáfono?</summary>
+        <p>Cuando pagas en un datáfono Redeban, te llega una notificación a tu Nequi y, antes de confirmar, te pedimos una validación de biometría facial para asegurarnos de que eres tú. Así cuidamos tu cupo aunque alguien más tenga acceso a tu celular.</p>
+      </details>
+      <details>
+        <summary>¿Cómo se paga cada cuota?</summary>
+        <p>Tus cuotas son mensuales y se descuentan automáticamente de tu disponible en Nequi el día de tu fecha de pago, sin que tengas que hacer nada. <span class="revisar">REVISAR: fecha de corte y pago</span></p>
+      </details>
+      <details>
+        <summary>¿Puedo abonar a capital para pagar más rápido?</summary>
+        <p>Sí, puedes hacer abonos extra a capital cuando quieras desde la app para reducir tus cuotas pendientes o el plazo de tu crédito. <span class="revisar">REVISAR: dónde se hace el abono en la app</span></p>
       </details>
       <details>
         <summary>¿Cómo sé cuánto cupo tengo disponible?</summary>
@@ -582,7 +779,7 @@
 
 <footer class="wrap">
   <div class="foot-top">
-    <div class="wordmark" style="font-size:1.05rem;">nequi<span class="dot">.</span></div>
+    <div class="wordmark" style="font-size:1.05rem;"><span class="dot"></span>Nequi</div>
     <span>Nequi S.A. Compañía de Financiamiento</span>
   </div>
   <p>
@@ -593,4 +790,3 @@
 </footer>
 </body>
 </html>
- 
