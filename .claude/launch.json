@@ -1,0 +1,60 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "next-dev",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": [
+        "run",
+        "dev"
+      ],
+      "port": 3000
+    },
+    {
+      "name": "landing-alaimo",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "server.ps1",
+        "-Port",
+        "5501"
+      ],
+      "port": 5501
+    },
+    {
+      "name": "landing-v2",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "server.ps1",
+        "-Port",
+        "5502",
+        "-Root",
+        ".claude/worktrees/landing-v2"
+      ],
+      "port": 5502
+    },
+    {
+      "name": "credito-pago-directo-v3",
+      "runtimeExecutable": "powershell.exe",
+      "runtimeArgs": [
+        "-NoProfile",
+        "-ExecutionPolicy",
+        "Bypass",
+        "-File",
+        "server.ps1",
+        "-Port",
+        "5503",
+        "-Root",
+        ".claude/worktrees/credito-pago-directo-v3"
+      ],
+      "port": 5503
+    }
+  ]
+}
