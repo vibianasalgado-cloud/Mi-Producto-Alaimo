@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import '@/app/auth.css';
 import LogoutButton from '../LogoutButton';
+import RegistrarVisita from '../RegistrarVisita';
 
 type Fila = {
   id: number;
@@ -64,6 +65,7 @@ export default function MisComentarios() {
 
   return (
     <div className="wrap">
+      <RegistrarVisita />
       <div className="top">
         <div>
           <h1>Mis comentarios</h1>

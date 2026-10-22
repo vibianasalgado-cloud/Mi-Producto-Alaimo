@@ -42,7 +42,27 @@ No hay Python en la máquina; para scripts auxiliares usar Node. Variables en `.
 - **Auth**: `/registro` y `/login` usan `app/AuthForm.tsx` → `/api/auth/{registro,login,logout}`. La sesión vive en cookies (`@supabase/ssr`); el navegador nunca recibe llaves ni habla con Supabase.
 - **`/mi-cuenta`** (usuario): formulario + lista de sus registros en `interesados` vía `/api/interesados`.
 - **`/admin`**: lee todo (`signups`, `feedback`, `interesados`) vía `/api/admin/datos`, muestra cuántos quieren ser contactados y exporta signups a CSV.
+- **`/admin/metricas`**: usuarios, activación (≥1 `interesados`) y retorno (≥2 días en `visits`) + gráfico semanal, vía `/api/admin/metricas` (llave secreta). `visits` guarda una fila por usuario por día (hora de Bogotá); `app/RegistrarVisita.tsx` la registra con `POST /api/visitas` al abrir `/mi-cuenta`, `/mis-comentarios` y `/admin`. También muestra contacto (`quiere_ser_contactado`), intención concreta y, sobre los visitantes únicos de la landing, el % de interesados. `landing_visits` guarda una fila por visitante anónimo (cookie `vid`) por día vía `POST /api/visitas-landing` (inserta con llave pública; sin `ON CONFLICT`, porque el anónimo no puede leer; no cuenta al admin ni a bots); solo el admin la lee.
 - `app/auth.css` es el CSS de las páginas de cuenta/admin; `app/landing.css` el de la landing (se importan por separado; no mezclar).
+
+## Métricas
+
+Dashboard en `/admin/metricas`; el cálculo vive en `app/api/admin/metricas/route.ts` (llave secreta, solo admin). Hipótesis a probar: cuántos clientes están interesados en un crédito y quieren ser contactados. "Total" = usuarios registrados en Auth; las fechas usan hora de Bogotá y las semanas empiezan el lunes. Los porcentajes se redondean a 1 decimal y valen 0 si el divisor es 0. Con pocos usuarios, leer el "N de TOTAL" antes que el porcentaje.
+
+| Métrica | Pregunta que responde | Cómo se calcula |
+|---|---|---|
+| Usuarios registrados | ¿Cuánta gente creó cuenta? | Cantidad de usuarios de Auth (`listUsers`, paginado). |
+| Activación | ¿Los que se registran dejan algún interés? | Usuarios distintos con ≥1 fila en `interesados` ÷ usuarios registrados. |
+| Retorno | ¿Vuelven a la app? | Usuarios con `visits` en ≥2 días distintos ÷ usuarios registrados. `visits` (una fila por usuario por día) la llena `RegistrarVisita` al abrir `/mi-cuenta`, `/mis-comentarios` y `/admin`; solo cuenta desde que existe la tabla. |
+| Quieren ser contactados | De los que tienen cuenta, ¿cuántos piden que los llamen? | Usuarios distintos con ≥1 `interesados.quiere_ser_contactado = true` ÷ usuarios registrados. |
+| Contacto entre quienes dejaron datos | ¿El interés se vuelve permiso de contacto, o solo curiosidad? | Mismos usuarios con contacto ÷ usuarios con ≥1 registro en `interesados`. |
+| Intención concreta | ¿Quien pide contacto tiene una compra en mente? | Solicitudes de contacto (filas con `quiere_ser_contactado = true`) con `como_hacerlo` o `donde_comprar` lleno ÷ total de solicitudes de contacto. Cuenta filas, no usuarios. |
+| Visitantes de la landing | ¿Cuánta gente ve la landing? | Visitantes únicos (`visitor_id` distintos) en `landing_visits`. La cookie `vid` es anónima; una fila por visitante por día vía `POST /api/visitas-landing`; no cuenta al admin ni a bots. Solo desde que existe la tabla. |
+| Interesados sobre visitantes | De los que ven la landing, ¿qué parte deja un registro de interés? | Usuarios con ≥1 `interesados` ÷ visitantes únicos. Es una razón entre dos conteos sin vincular a la persona (el visitante anónimo no se une a su cuenta), así que puede pasar de 100 % al inicio. |
+| Contacto sobre visitantes | De los que ven la landing, ¿qué parte pide contacto? | Usuarios con contacto ÷ visitantes únicos (misma salvedad). |
+| Por semana (gráfico, 8 semanas) | ¿Crece la entrada de gente y vuelve a usar la app? | `nuevos` = usuarios por semana de `created_at`; `entraron` = usuarios distintos con alguna fila en `visits` esa semana. |
+
+Umbrales propuestos para cambiar de idea (ajustables): contacto sobre usuarios < 15 %, contacto entre quienes dejaron datos < 40 %, intención concreta < 30 %.
 
 ## Seguridad
 

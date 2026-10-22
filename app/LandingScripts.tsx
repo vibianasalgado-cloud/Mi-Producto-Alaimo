@@ -51,6 +51,9 @@ export default function LandingScripts() {
   useEffect(() => {
     const limpiar: Array<() => void> = [];
 
+    // Cuenta la visita de hoy (un visitante = una fila por día)
+    fetch('/api/visitas-landing', { method: 'POST' }).catch(() => {});
+
     // Tema claro/oscuro
     const btn = document.getElementById('theme-toggle');
     if (btn) {

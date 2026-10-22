@@ -31,6 +31,7 @@
     border:none;border-radius:999px;font-family:inherit;font-weight:700;font-size:.9rem;
     cursor:pointer;padding:.75em 1.4em;transition:transform .15s ease, background .15s ease;
   }
+  a.btn{text-decoration:none;}
   .btn:focus-visible{outline:3px solid var(--blue);outline-offset:2px;}
   .btn:active{transform:scale(.97);}
   .btn[disabled]{opacity:.6;cursor:progress;}
@@ -67,6 +68,19 @@
   td.fecha{white-space:nowrap;color:var(--ink-soft);}
   td.mensaje{min-width:220px;overflow-wrap:anywhere;}
   td.vacio{color:var(--ink-soft);text-align:center;padding:24px;}
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-bottom:40px;}
+  .stat{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 24px;}
+  .stat .label{font-size:.75rem;font-weight:700;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-soft);}
+  .stat .value{font-size:2.2rem;font-weight:800;line-height:1.2;margin-top:4px;}
+  .stat .sub{color:var(--ink-soft);font-size:.85rem;}
+  .chart{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:20px 24px;}
+  .chart svg{width:100%;height:auto;display:block;}
+  .chart text{fill:var(--ink-soft);font-family:inherit;font-size:12px;}
+  .chart .grid{stroke:var(--line);stroke-width:1;}
+  .chart .bar-nuevos{fill:var(--magenta);}
+  .chart .bar-activos{fill:var(--blue);}
+  .legend{display:flex;gap:20px;flex-wrap:wrap;font-size:.85rem;font-weight:600;margin-bottom:8px;}
+  .legend i{display:inline-block;width:12px;height:12px;border-radius:3px;margin-right:6px;vertical-align:-1px;}
   .card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:12px;margin-bottom:32px;}
   .card label,.login label{font-weight:700;font-size:.85rem;}
   .card input[type=text],.card textarea{width:100%;font-family:inherit;font-size:.95rem;padding:.8em 1em;border-radius:14px;border:1.5px solid var(--line);background:var(--paper);color:var(--ink);}

@@ -2,7 +2,9 @@
 
 import { useEffect, useState } from 'react';
 import '@/app/auth.css';
+import Link from 'next/link';
 import LogoutButton from '../LogoutButton';
+import RegistrarVisita from '../RegistrarVisita';
 
 type Base = { id: number; created_at: string; email: string | null };
 type Signup = Base & { mensaje: string | null };
@@ -65,11 +67,15 @@ export default function Admin() {
 
   return (
     <div className="wrap">
+      <RegistrarVisita />
       <div className="top">
         <div>
           <h1>Admin</h1>
           <span className="who">{datos?.email}</span>
         </div>
+        <Link href="/admin/metricas" className="btn btn-primary">
+          Ver métricas
+        </Link>
         <LogoutButton />
       </div>
       {error && <p className="msg err">{error}</p>}
