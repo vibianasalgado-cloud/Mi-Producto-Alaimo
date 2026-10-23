@@ -379,6 +379,48 @@
     </form>
   </section>
 
+  <section id="simulador">
+    <div class="section-head">
+      <span class="kicker">Simulador</span>
+      <h2>Simula tu crédito antes de comprar</h2>
+      <p>Mueve el valor de tu compra y elige tus cuotas para ver cuánto pagarías cada mes.</p>
+    </div>
+    <div class="sim">
+      <form class="sim-controls" id="form-simulador" novalidate>
+        <div class="sim-field">
+          <div class="sim-label-row">
+            <label for="sim-monto">Valor de tu compra</label>
+            <input type="text" id="sim-monto-valor" class="sim-monto-campo" inputmode="numeric" autocomplete="off" value="$1.000.000" aria-label="Valor de tu compra en pesos, entre $300.000 y $5.000.000" aria-describedby="sim-monto-aviso">
+          </div>
+          <p class="sim-monto-aviso" id="sim-monto-aviso" aria-live="polite" hidden></p>
+          <input type="range" id="sim-monto" name="monto" min="300000" max="5000000" step="50000" value="1000000">
+          <div class="sim-range-ends"><span>$300.000</span><span>$5.000.000</span></div>
+        </div>
+        <fieldset class="sim-field">
+          <legend>Número de cuotas</legend>
+          <div class="sim-pills">
+            <label class="sim-pill"><input type="radio" name="cuotas" value="3"><span>3</span></label>
+            <label class="sim-pill"><input type="radio" name="cuotas" value="6" checked><span>6</span></label>
+            <label class="sim-pill"><input type="radio" name="cuotas" value="12"><span>12</span></label>
+            <label class="sim-pill"><input type="radio" name="cuotas" value="18"><span>18</span></label>
+            <label class="sim-pill"><input type="radio" name="cuotas" value="24"><span>24</span></label>
+          </div>
+        </fieldset>
+      </form>
+      <div class="sim-result">
+        <span class="sim-result-label">Cuota mensual estimada</span>
+        <div class="sim-cuota" id="sim-cuota" aria-live="polite">$178.526</div>
+        <div class="sim-row"><span>Total a pagar</span><strong id="sim-total">$1.071.156</strong></div>
+        <div class="sim-row"><span>Tasa de ejemplo</span><strong>2,0 % mensual</strong></div>
+        <p class="sim-note">
+          Simulación de referencia, sin valor contractual. Las condiciones reales se muestran en la app antes de confirmar.
+          <span class="revisar">REVISAR: tasa real</span>
+        </p>
+        <a class="btn btn-primary" href="#form-interes" id="sim-contacto">Quiero que me contacten con esta simulación</a>
+      </div>
+    </div>
+  </section>
+
   <section>
     <div class="cta-band">
       <div class="blob blob1" style="top:-100px;right:-60px;"></div>
@@ -388,10 +430,39 @@
       <a class="btn btn-primary" href="#">Actívalo en la app Nequi</a>
       <form class="form form-interest" id="form-interes" novalidate>
         <h3>¿Quieres que te contactemos?</h3>
+        <label for="int-nombre">Nombres y apellidos completos</label>
+        <input type="text" id="int-nombre" name="nombre_completo" maxlength="120" required autocomplete="name" placeholder="Como aparecen en tu documento">
+        <div class="form-row">
+          <div class="form-col">
+            <label for="int-tipo-doc">Tipo de documento</label>
+            <select id="int-tipo-doc" name="tipo_documento" required>
+              <option value="" selected disabled>Elige uno</option>
+              <option value="CC">Cédula de ciudadanía</option>
+              <option value="CE">Cédula de extranjería</option>
+              <option value="PPT">Permiso por Protección Temporal</option>
+              <option value="PA">Pasaporte</option>
+            </select>
+          </div>
+          <div class="form-col">
+            <label for="int-num-doc">Número de documento</label>
+            <input type="text" id="int-num-doc" name="numero_documento" maxlength="15" required autocomplete="off" placeholder="Sin puntos ni espacios">
+          </div>
+        </div>
         <label for="int-email">Correo</label>
         <input type="email" id="int-email" name="email" maxlength="254" required autocomplete="email" placeholder="tucorreo@ejemplo.com">
         <label for="int-mensaje">Mensaje</label>
         <textarea id="int-mensaje" name="mensaje" maxlength="500">Quiero ser contactado, estoy interesado(a) en un crédito</textarea>
+        <p class="sim-adjunta" id="sim-adjunta" hidden>
+          <span id="sim-adjunta-texto"></span>
+          <button type="button" id="sim-quitar">Quitar</button>
+        </p>
+        <label class="form-check" for="int-autoriza">
+          <input type="checkbox" id="int-autoriza" name="autoriza_datos" required>
+          <span>
+            Autorizo el tratamiento de datos.
+            <span class="revisar">REVISAR con Legal: texto de autorización y enlace a la política</span>
+          </span>
+        </label>
         <div class="hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
         <button type="submit" class="btn btn-primary">Quiero que me contacten</button>
         <p class="form-msg" role="status" aria-live="polite"></p>

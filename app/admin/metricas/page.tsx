@@ -15,7 +15,27 @@ type Metricas = {
   contacto: { n: number; pct: number };
   contactoDeInteresados: { n: number; de: number; pct: number };
   intencion: { n: number; de: number; pct: number };
-  landing: { visitantes: number; desde: string | null; interesados: number; pct: number; pctContacto: number };
+  landing: {
+    visitantes: number;
+    desde: string | null;
+    interesados: number;
+    pct: number;
+    pctContacto: number;
+    dejaronDatos: number;
+    pctDatos: number;
+    envios: number;
+    personas: number;
+  };
+  simulador: {
+    visitantes: number;
+    desde: string | null;
+    pct: number;
+    dejaronDatos: number;
+    pctDatos: number;
+    contactos: number;
+    montoPromedio: number;
+    cuotasPromedio: number;
+  };
   semanas: Semana[];
 };
 
@@ -164,6 +184,14 @@ export default function MetricasAdmin() {
                 <div className="sub">Visitantes únicos (sin contar al admin)</div>
               </div>
               <div className="stat">
+                <div className="label">Dejaron sus datos en la landing</div>
+                <div className="value">{datos.landing.visitantes ? pct(datos.landing.pctDatos) : '—'}</div>
+                <div className="sub">
+                  {datos.landing.dejaronDatos} de {datos.landing.visitantes} visitantes (mismo visitante);{' '}
+                  {datos.landing.personas} personas en {datos.landing.envios} envíos
+                </div>
+              </div>
+              <div className="stat">
                 <div className="label">Interesados sobre visitantes</div>
                 <div className="value">{datos.landing.visitantes ? pct(datos.landing.pct) : '—'}</div>
                 <div className="sub">
@@ -175,6 +203,43 @@ export default function MetricasAdmin() {
                 <div className="value">{datos.landing.visitantes ? pct(datos.landing.pctContacto) : '—'}</div>
                 <div className="sub">
                   {datos.contacto.n} de {datos.landing.visitantes} visitantes pidieron que los contacten
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="block">
+            <div className="block-head">
+              <h2>Simulador</h2>
+              <span className="count">
+                {datos.simulador.desde ? `Simulaciones contadas desde el ${dia(datos.simulador.desde)}` : 'Aún sin simulaciones'}
+              </span>
+            </div>
+            <div className="stats">
+              <div className="stat">
+                <div className="label">Simularon</div>
+                <div className="value">{datos.landing.visitantes ? pct(datos.simulador.pct) : '—'}</div>
+                <div className="sub">
+                  {datos.simulador.visitantes} de {datos.landing.visitantes} visitantes usaron el simulador
+                </div>
+              </div>
+              <div className="stat">
+                <div className="label">Simularon y dejaron sus datos</div>
+                <div className="value">{datos.simulador.visitantes ? pct(datos.simulador.pctDatos) : '—'}</div>
+                <div className="sub">
+                  {datos.simulador.dejaronDatos} de {datos.simulador.visitantes} que simularon enviaron sus datos con la simulación (mismo visitante);{' '}
+                  {datos.simulador.contactos} de {datos.landing.envios} envíos traen simulación
+                </div>
+              </div>
+              <div className="stat">
+                <div className="label">Monto y plazo promedio</div>
+                <div className="value">
+                  {datos.simulador.contactos ? '$' + datos.simulador.montoPromedio.toLocaleString('es-CO') : '—'}
+                </div>
+                <div className="sub">
+                  {datos.simulador.contactos
+                    ? `${datos.simulador.cuotasPromedio.toLocaleString('es-CO')} cuotas en promedio, de ${datos.simulador.contactos} solicitudes con simulación`
+                    : 'Aún no hay solicitudes con simulación'}
                 </div>
               </div>
             </div>

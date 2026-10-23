@@ -7,7 +7,16 @@ import LogoutButton from '../LogoutButton';
 import RegistrarVisita from '../RegistrarVisita';
 
 type Base = { id: number; created_at: string; email: string | null };
-type Signup = Base & { mensaje: string | null };
+type Signup = Base & {
+  mensaje: string | null;
+  nombre_completo: string | null;
+  tipo_documento: string | null;
+  numero_documento: string | null;
+  autoriza_datos_at: string | null;
+  de_admin: boolean;
+  simulacion_monto: number | null;
+  simulacion_cuotas: number | null;
+};
 type Feedback = Base & { mensaje: string };
 type Interesado = Base & {
   oferta_comercios: string;
@@ -26,8 +35,37 @@ function csvCell(v: unknown) {
 }
 
 function descargarCsv(filas: Signup[]) {
-  const lineas = [['id', 'correo', 'mensaje', 'fecha'].map(csvCell).join(',')];
-  filas.forEach((r) => lineas.push([r.id, r.email, r.mensaje, r.created_at].map(csvCell).join(',')));
+  const columnas = [
+    'id',
+    'nombre_completo',
+    'tipo_documento',
+    'numero_documento',
+    'correo',
+    'mensaje',
+    'simulacion_monto',
+    'simulacion_cuotas',
+    'autoriza_datos',
+    'fecha',
+  ];
+  const lineas = [columnas.map(csvCell).join(',')];
+  filas.forEach((r) =>
+    lineas.push(
+      [
+        r.id,
+        r.nombre_completo,
+        r.tipo_documento,
+        r.numero_documento,
+        r.email,
+        r.mensaje,
+        r.simulacion_monto,
+        r.simulacion_cuotas,
+        r.autoriza_datos_at,
+        r.created_at,
+      ]
+        .map(csvCell)
+        .join(','),
+    ),
+  );
   const blob = new Blob(['﻿' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
@@ -65,6 +103,15 @@ export default function Admin() {
 
   const quierenContacto = datos?.interesados.filter((r) => r.quiere_ser_contactado).length ?? 0;
 
+  // Envíos agrupados por correo; el grupo con el envío más reciente va primero (la API ya los trae del más nuevo al más viejo)
+  const grupos = new Map<string, Signup[]>();
+  for (const r of datos?.signups ?? []) {
+    const clave = (r.email ?? '').toLowerCase();
+    if (!grupos.has(clave)) grupos.set(clave, []);
+    grupos.get(clave)!.push(r);
+  }
+  const signupsAgrupados = [...grupos.values()];
+
   return (
     <div className="wrap">
       <RegistrarVisita />
@@ -85,7 +132,10 @@ export default function Admin() {
           <section className="block">
             <div className="block-head">
               <h2>
-                Signups <span className="count">({datos.signups.length})</span>
+                Signups{' '}
+                <span className="count">
+                  ({signupsAgrupados.length} personas, {datos.signups.length} envíos)
+                </span>
               </h2>
               <button type="button" className="btn btn-primary" onClick={() => descargarCsv(datos.signups)}>
                 Descargar CSV
@@ -97,18 +147,36 @@ export default function Admin() {
                   <tr>
                     <th>Fecha</th>
                     <th>Correo</th>
+                    <th>Nombre</th>
+                    <th>Documento</th>
                     <th>Mensaje</th>
+                    <th>Simulación</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {datos.signups.length === 0 && <Vacio cols={3} />}
-                  {datos.signups.map((r) => (
-                    <tr key={r.id}>
-                      <td className="fecha">{fmt(r.created_at)}</td>
-                      <td>{r.email || '—'}</td>
-                      <td className="mensaje">{r.mensaje}</td>
-                    </tr>
-                  ))}
+                  {datos.signups.length === 0 && <Vacio cols={6} />}
+                  {signupsAgrupados.flatMap((envios) =>
+                    envios.map((r, i) => (
+                      <tr key={r.id}>
+                        <td className="fecha">
+                          {fmt(r.created_at)}
+                          {r.de_admin && <span className="count"> (prueba admin)</span>}
+                        </td>
+                        <td>
+                          {i === 0 ? r.email || '—' : '↳ mismo correo'}
+                          {i === 0 && envios.length > 1 && <span className="count"> ({envios.length} envíos)</span>}
+                        </td>
+                        <td>{r.nombre_completo || '—'}</td>
+                        <td className="fecha">{r.numero_documento ? `${r.tipo_documento} ${r.numero_documento}` : '—'}</td>
+                        <td className="mensaje">{r.mensaje}</td>
+                        <td className="fecha">
+                          {r.simulacion_monto != null
+                            ? `$${r.simulacion_monto.toLocaleString('es-CO')} · ${r.simulacion_cuotas} cuotas`
+                            : '—'}
+                        </td>
+                      </tr>
+                    )),
+                  )}
                 </tbody>
               </table>
             </div>

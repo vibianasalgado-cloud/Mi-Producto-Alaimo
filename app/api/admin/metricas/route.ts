@@ -49,16 +49,26 @@ export async function GET() {
     }
   }
 
-  const [interesados, visitas, visitasLanding] = await Promise.all([
+  const [interesados, visitas, visitasLanding, simulaciones, todosSignups] = await Promise.all([
     todas<{ user_id: string; quiere_ser_contactado: boolean; como_hacerlo: string | null; donde_comprar: string | null }>(
       'interesados',
       'user_id, quiere_ser_contactado, como_hacerlo, donde_comprar',
     ),
     todas<{ user_id: string; day: string }>('visits', 'user_id, day'),
     todas<{ visitor_id: string; day: string }>('landing_visits', 'visitor_id, day'),
+    todas<{ visitor_id: string; day: string }>('simulaciones', 'visitor_id, day'),
+    todas<{
+      email: string;
+      visitor_id: string | null;
+      simulacion_monto: number | null;
+      simulacion_cuotas: number | null;
+      de_admin: boolean;
+    }>('signups', 'email, visitor_id, simulacion_monto, simulacion_cuotas, de_admin'),
   ]);
-  if (!interesados || !visitas || !visitasLanding)
+  if (!interesados || !visitas || !visitasLanding || !simulaciones || !todosSignups)
     return NextResponse.json({ error: 'No se pudieron cargar las métricas.' }, { status: 500 });
+  // Los envíos de prueba del admin no cuentan (igual que sus visitas y simulaciones)
+  const signups = todosSignups.filter((s) => !s.de_admin);
 
   const total = usuarios.length;
   const ids = new Set(usuarios.map((u) => u.id));
@@ -73,6 +83,23 @@ export async function GET() {
   // Landing: visitantes únicos (por cookie anónima) desde que se empezó a contar
   const visitantes = new Set(visitasLanding.map((v) => v.visitor_id)).size;
   const desde = visitasLanding.reduce<string | null>((min, v) => (min === null || v.day < min ? v.day : min), null);
+
+  // Formulario de la landing: cada envío es una fila; las personas se cuentan por correo.
+  // Los envíos con visitor_id (desde que se guarda) se unen con las visitas y simulaciones del mismo visitante.
+  const personas = new Set(signups.map((s) => s.email.toLowerCase())).size;
+  const visitantesConDatos = new Set(signups.map((s) => s.visitor_id).filter((v): v is string => v !== null));
+  const visitantesLanding = new Set(visitasLanding.map((v) => v.visitor_id));
+  const dejaronDatos = [...visitantesLanding].filter((v) => visitantesConDatos.has(v)).length;
+
+  // Simulador: visitantes únicos que lo usaron y cuántos de ellos dejaron datos con la simulación adjunta
+  // (un envío sin simulación del mismo visitante no cuenta: no muestra que el simulador llevó al contacto)
+  const conSimulacion = signups.filter((s) => s.simulacion_monto !== null && s.simulacion_cuotas !== null);
+  const visitantesConSim = new Set(conSimulacion.map((s) => s.visitor_id).filter((v): v is string => v !== null));
+  const visitantesSim = new Set(simulaciones.map((s) => s.visitor_id));
+  const simularon = visitantesSim.size;
+  const simularonYDejaron = [...visitantesSim].filter((v) => visitantesConSim.has(v)).length;
+  const desdeSim = simulaciones.reduce<string | null>((min, s) => (min === null || s.day < min ? s.day : min), null);
+  const promedio = (ns: number[]) => (ns.length === 0 ? 0 : ns.reduce((a, b) => a + b, 0) / ns.length);
 
   const diasPorUsuario = new Map<string, Set<string>>();
   for (const v of visitas) {
@@ -113,6 +140,20 @@ export async function GET() {
       interesados: conRegistro.size,
       pct: pct(conRegistro.size, visitantes),
       pctContacto: pct(conContacto.size, visitantes),
+      dejaronDatos,
+      pctDatos: pct(dejaronDatos, visitantes),
+      envios: signups.length,
+      personas,
+    },
+    simulador: {
+      visitantes: simularon,
+      desde: desdeSim,
+      pct: pct(simularon, visitantes),
+      dejaronDatos: simularonYDejaron,
+      pctDatos: pct(simularonYDejaron, simularon),
+      contactos: conSimulacion.length,
+      montoPromedio: Math.round(promedio(conSimulacion.map((s) => s.simulacion_monto!))),
+      cuotasPromedio: Math.round(promedio(conSimulacion.map((s) => s.simulacion_cuotas!)) * 10) / 10,
     },
     semanas: semanas.map((s) => ({ semana: s, nuevos: nuevos.get(s)!, activos: activos.get(s)!.size })),
   });
