@@ -12,7 +12,10 @@ type Fila = {
   como_hacerlo: string | null;
   donde_comprar: string | null;
   quiere_ser_contactado: boolean;
+  canal_contacto: string | null;
 };
+
+const CANALES: Record<string, string> = { whatsapp: 'WhatsApp', llamada: 'Llamada', correo: 'Correo' };
 
 const fmt = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -22,6 +25,7 @@ export default function MiCuenta() {
   const [oferta, setOferta] = useState('');
   const [como, setComo] = useState('');
   const [donde, setDonde] = useState('');
+  const [canal, setCanal] = useState('');
   const [contacto, setContacto] = useState(true);
   const [guardando, setGuardando] = useState(false);
   const enCurso = useRef(false); // el estado se actualiza tarde; esto bloquea el segundo envío al instante
@@ -56,6 +60,7 @@ export default function MiCuenta() {
           como_hacerlo: como,
           donde_comprar: donde,
           quiere_ser_contactado: contacto,
+          canal_contacto: canal,
         }),
       });
       const j = await res.json().catch(() => ({}));
@@ -63,6 +68,7 @@ export default function MiCuenta() {
       setOferta('');
       setComo('');
       setDonde('');
+      setCanal('');
       setContacto(true);
       setMsg({ texto: '¡Listo, gracias!', tipo: 'ok' });
       await cargar();
@@ -97,6 +103,17 @@ export default function MiCuenta() {
           ¿Dónde te gustaría comprar? <span className="count">(opcional)</span>
         </label>
         <input type="text" id="donde" maxLength={500} value={donde} onChange={(e) => setDonde(e.target.value)} />
+        <label htmlFor="canal">
+          ¿Cómo prefieres que te contactemos? <span className="count">(opcional)</span>
+        </label>
+        <select id="canal" value={canal} onChange={(e) => setCanal(e.target.value)}>
+          <option value="">Sin preferencia</option>
+          {Object.entries(CANALES).map(([valor, nombre]) => (
+            <option key={valor} value={valor}>
+              {nombre}
+            </option>
+          ))}
+        </select>
         <label className="check">
           <input type="checkbox" checked={contacto} onChange={(e) => setContacto(e.target.checked)} /> Quiero ser
           contactado para obtener un crédito
@@ -124,12 +141,13 @@ export default function MiCuenta() {
                 <th>Cómo</th>
                 <th>Dónde</th>
                 <th>Contacto</th>
+                <th>Canal</th>
               </tr>
             </thead>
             <tbody>
               {filas && filas.length === 0 && (
                 <tr>
-                  <td colSpan={5} className="vacio">
+                  <td colSpan={6} className="vacio">
                     Todavía no tienes registros.
                   </td>
                 </tr>
@@ -141,6 +159,7 @@ export default function MiCuenta() {
                   <td className="mensaje">{r.como_hacerlo || '—'}</td>
                   <td className="mensaje">{r.donde_comprar || '—'}</td>
                   <td className="mensaje">{r.quiere_ser_contactado ? 'Sí' : 'No'}</td>
+                  <td className="mensaje">{(r.canal_contacto && CANALES[r.canal_contacto]) || '—'}</td>
                 </tr>
               ))}
             </tbody>

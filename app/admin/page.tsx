@@ -23,8 +23,11 @@ type Interesado = Base & {
   como_hacerlo: string | null;
   donde_comprar: string | null;
   quiere_ser_contactado: boolean;
+  canal_contacto: string | null;
 };
 type Datos = { email: string; signups: Signup[]; feedback: Feedback[]; interesados: Interesado[] };
+
+const CANALES: Record<string, string> = { whatsapp: 'WhatsApp', llamada: 'Llamada', correo: 'Correo' };
 
 const fmt = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -201,10 +204,11 @@ export default function Admin() {
                     <th>Cómo</th>
                     <th>Dónde</th>
                     <th>Contacto</th>
+                    <th>Canal</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {datos.interesados.length === 0 && <Vacio cols={6} />}
+                  {datos.interesados.length === 0 && <Vacio cols={7} />}
                   {datos.interesados.map((r) => (
                     <tr key={r.id}>
                       <td className="fecha">{fmt(r.created_at)}</td>
@@ -213,6 +217,7 @@ export default function Admin() {
                       <td className="mensaje">{r.como_hacerlo || '—'}</td>
                       <td className="mensaje">{r.donde_comprar || '—'}</td>
                       <td>{r.quiere_ser_contactado ? 'Sí' : 'No'}</td>
+                      <td>{(r.canal_contacto && CANALES[r.canal_contacto]) || '—'}</td>
                     </tr>
                   ))}
                 </tbody>

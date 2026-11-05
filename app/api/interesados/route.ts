@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 
+// Igual que el CHECK de interesados.canal_contacto
+const CANALES = ['whatsapp', 'llamada', 'correo'];
+
 async function sesion() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getUser();
@@ -26,12 +29,16 @@ export async function POST(req: Request) {
   if (!oferta) return NextResponse.json({ error: 'Cuéntanos qué ofrecimiento te interesa.' }, { status: 400 });
   if ([oferta, como, donde].some((t) => t.length > 500))
     return NextResponse.json({ error: 'Alguno de los textos es muy largo (máximo 500).' }, { status: 400 });
+  const canal = texto(b.canal_contacto);
+  if (canal && !CANALES.includes(canal))
+    return NextResponse.json({ error: 'Elige WhatsApp, llamada o correo como forma de contacto.' }, { status: 400 });
 
   const { error } = await supabase.from('interesados').insert({
     oferta_comercios: oferta,
     como_hacerlo: como || null,
     donde_comprar: donde || null,
     quiere_ser_contactado: b.quiere_ser_contactado === true,
+    canal_contacto: canal || null,
   });
   if (error) return NextResponse.json({ error: 'No pudimos guardar. Intenta de nuevo.' }, { status: 500 });
   return NextResponse.json({ ok: true });
