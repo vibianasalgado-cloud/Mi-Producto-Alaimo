@@ -76,8 +76,9 @@ Umbrales propuestos para cambiar de idea (ajustables): contacto sobre usuarios <
 
 ## Supabase
 
-- Proyecto remoto: ref `otytsfrlyhxmoebyxpwa`. Verificar migraciones aplicadas con `list_migrations`; el archivo y el remoto pueden desfasarse.
-- Producción: la base de producción la migra solo Vercel. `vercel.json` corre `npm run build` y, solo si `VERCEL_ENV = production`, `supabase db push` (CLI en devDependencies) con `POSTGRES_URL_NON_POOLING`; si falta la variable, el build o una migración fallan, no se publica. En preview no se migra. Desde aquí solo se migra la base de desarrollo; nunca la de producción. Una migración ya aplicada en producción no se edita: se agrega otra.
+- Desarrollo: `sup-mi-producto-dev` (ref `otytsfrlyhxmoebyxpwa`). Es la única base contra la que se desarrolla, se prueba y se aplican migraciones desde aquí. Verificar migraciones aplicadas con `list_migrations`; el archivo y el remoto pueden desfasarse.
+- Producción: https://mi-producto-alaimo.vercel.app (proyecto Vercel `mi-producto-alaimo`), con la base `sup-mi-producto-prod` (ref `hwaobeocjzusxkdapbzt`). Nunca se desarrolla, se prueba ni se crean datos contra ella.
+- Las migraciones a producción las aplica Vercel en cada deploy. Nunca apliques migraciones ni cambies datos en la base de producción. `vercel.json` corre `npm run build` y, solo si `VERCEL_ENV = production`, `supabase db push` (CLI en devDependencies) con `POSTGRES_URL_NON_POOLING`; si falta la variable, el build o una migración fallan, no se publica. En preview no se migra. Una migración ya aplicada en producción no se edita: se agrega otra.
 - Auth por correo: "Enable email provider" activo y "Confirm email" desactivado (con él activo el plan gratuito da "email rate limit exceeded"). Supabase rechaza dominios sin MX (`test.com`, `example.com`).
 
 ## Convenciones
