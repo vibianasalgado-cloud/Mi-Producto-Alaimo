@@ -1,0 +1,5 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "npm run build && if [ \"$VERCEL_ENV\" = \"production\" ]; then npx --no-install supabase db push --db-url \"${POSTGRES_URL_NON_POOLING:?Falta POSTGRES_URL_NON_POOLING en Vercel}\" --yes; else echo \"VERCEL_ENV=$VERCEL_ENV: no se aplican migraciones\"; fi"
+}

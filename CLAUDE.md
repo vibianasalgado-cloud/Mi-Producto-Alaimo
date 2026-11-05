@@ -77,6 +77,7 @@ Umbrales propuestos para cambiar de idea (ajustables): contacto sobre usuarios <
 ## Supabase
 
 - Proyecto remoto: ref `otytsfrlyhxmoebyxpwa`. Verificar migraciones aplicadas con `list_migrations`; el archivo y el remoto pueden desfasarse.
+- Producción: la base de producción la migra solo Vercel. `vercel.json` corre `npm run build` y, solo si `VERCEL_ENV = production`, `supabase db push` (CLI en devDependencies) con `POSTGRES_URL_NON_POOLING`; si falta la variable, el build o una migración fallan, no se publica. En preview no se migra. Desde aquí solo se migra la base de desarrollo; nunca la de producción. Una migración ya aplicada en producción no se edita: se agrega otra.
 - Auth por correo: "Enable email provider" activo y "Confirm email" desactivado (con él activo el plan gratuito da "email rate limit exceeded"). Supabase rechaza dominios sin MX (`test.com`, `example.com`).
 
 ## Convenciones
