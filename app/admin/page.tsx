@@ -17,6 +17,7 @@ type Signup = Base & {
   simulacion_monto: number | null;
   simulacion_cuotas: number | null;
   canal_contacto: string | null;
+  celular: string | null;
 };
 type Feedback = Base & { mensaje: string };
 type Interesado = Base & {
@@ -47,6 +48,7 @@ function descargarCsv(filas: Signup[]) {
     'correo',
     'mensaje',
     'canal_contacto',
+    'celular',
     'simulacion_monto',
     'simulacion_cuotas',
     'autoriza_datos',
@@ -63,6 +65,7 @@ function descargarCsv(filas: Signup[]) {
         r.email,
         r.mensaje,
         r.canal_contacto,
+        r.celular,
         r.simulacion_monto,
         r.simulacion_cuotas,
         r.autoriza_datos_at,
@@ -157,11 +160,12 @@ export default function Admin() {
                     <th>Documento</th>
                     <th>Mensaje</th>
                     <th>Canal</th>
+                    <th>Celular</th>
                     <th>Simulación</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {datos.signups.length === 0 && <Vacio cols={7} />}
+                  {datos.signups.length === 0 && <Vacio cols={8} />}
                   {signupsAgrupados.flatMap((envios) =>
                     envios.map((r, i) => (
                       <tr key={r.id}>
@@ -177,6 +181,7 @@ export default function Admin() {
                         <td className="fecha">{r.numero_documento ? `${r.tipo_documento} ${r.numero_documento}` : '—'}</td>
                         <td className="mensaje">{r.mensaje}</td>
                         <td>{(r.canal_contacto && CANALES[r.canal_contacto]) || '—'}</td>
+                        <td className="fecha">{r.celular || '—'}</td>
                         <td className="fecha">
                           {r.simulacion_monto != null
                             ? `$${r.simulacion_monto.toLocaleString('es-CO')} · ${r.simulacion_cuotas} cuotas`
