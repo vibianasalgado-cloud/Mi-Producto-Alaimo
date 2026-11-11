@@ -450,6 +450,13 @@
         </div>
         <label for="int-email">Correo</label>
         <input type="email" id="int-email" name="email" maxlength="254" required autocomplete="email" placeholder="tucorreo@ejemplo.com">
+        <label for="int-canal">¿Cómo prefieres que te contactemos? (opcional)</label>
+        <select id="int-canal" name="canal_contacto">
+          <option value="" selected>Sin preferencia</option>
+          <option value="whatsapp">WhatsApp</option>
+          <option value="llamada">Llamada</option>
+          <option value="correo">Correo</option>
+        </select>
         <label for="int-mensaje">Mensaje</label>
         <textarea id="int-mensaje" name="mensaje" maxlength="500">Quiero ser contactado, estoy interesado(a) en un crédito</textarea>
         <p class="sim-adjunta" id="sim-adjunta" hidden>

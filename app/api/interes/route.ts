@@ -6,6 +6,8 @@ import { isAdmin } from '@/lib/admin';
 
 const DEFAULT = 'Quiero ser contactado, estoy interesado(a) en un crédito';
 const CUOTAS = [3, 6, 12, 18, 24];
+// Igual que el CHECK de signups.canal_contacto
+const CANALES = ['whatsapp', 'llamada', 'correo'];
 // Mismos formatos que el CHECK signups_documento_valido
 const DOCUMENTO: Record<string, RegExp> = {
   CC: /^[0-9]{5,10}$/,
@@ -40,6 +42,13 @@ export async function POST(req: Request) {
   if (mensaje.length > 500) return error('El mensaje es muy largo.');
   if (body.autoriza_datos !== true) return error('Para contactarte necesitamos tu autorización de tratamiento de datos.');
 
+  // Canal preferido (opcional): vacío o null = sin preferencia
+  const canalCrudo = body.canal_contacto ?? null;
+  if (canalCrudo !== null && typeof canalCrudo !== 'string')
+    return error('Elige WhatsApp, llamada o correo como forma de contacto.');
+  const canal = texto(canalCrudo);
+  if (canal && !CANALES.includes(canal)) return error('Elige WhatsApp, llamada o correo como forma de contacto.');
+
   // Simulación adjunta (opcional): mismos límites que los CHECK de signups
   const monto = body.simulacion_monto ?? null;
   const cuotas = body.simulacion_cuotas ?? null;
@@ -55,6 +64,7 @@ export async function POST(req: Request) {
   const { error: falla } = await supabase.from('signups').insert({
     email,
     mensaje,
+    canal_contacto: canal || null,
     nombre_completo: nombre,
     tipo_documento: tipo,
     numero_documento: numero.toUpperCase(),

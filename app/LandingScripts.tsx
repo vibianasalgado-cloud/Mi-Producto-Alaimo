@@ -260,6 +260,7 @@ export default function LandingScripts() {
           tipo_documento: tipo,
           numero_documento: numero,
           email,
+          canal_contacto: valor(f, 'canal_contacto'),
           // Si el navegador restauró un mensaje con "Simulé …" sin simulación adjunta, la frase se ajusta a lo que se envía
           mensaje: conSimulacion(valor(f, 'mensaje').trim(), adjunta),
           autoriza_datos: true,
