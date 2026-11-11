@@ -47,6 +47,11 @@ function conectar(formId: string, armar: (f: HTMLFormElement) => Armado): () => 
 
 const valor = (f: HTMLFormElement, n: string) => (f.elements.namedItem(n) as HTMLInputElement).value;
 
+// Celular colombiano: se aceptan espacios, guiones, puntos, paréntesis y el prefijo +57
+const CANAL_CON_CELULAR = ['whatsapp', 'llamada'];
+const normalizarCelular = (v: string) => v.replace(/[\s().-]/g, '').replace(/^\+?57(?=3\d{9}$)/, '');
+const CELULAR_RE = /^3[0-9]{9}$/;
+
 // Simulador: tasa de ejemplo, no la real (REVISAR con Legal/Producto)
 const TASA_MENSUAL = 0.02;
 const MONTO_MIN = 300000;
@@ -237,6 +242,29 @@ export default function LandingScripts() {
       limpiar.push(() => tipoDoc.removeEventListener('change', ajustarTeclado));
     }
 
+    // Celular: solo se muestra (y es obligatorio) si eligen WhatsApp o llamada
+    const canalSel = document.getElementById('int-canal') as HTMLSelectElement | null;
+    const celular = document.getElementById('int-celular') as HTMLInputElement | null;
+    const celularLabel = document.getElementById('int-celular-label');
+    if (canalSel && celular && celularLabel && formInteres) {
+      const mostrarCelular = () => {
+        const pide = CANAL_CON_CELULAR.includes(canalSel.value);
+        celular.hidden = !pide;
+        celularLabel.hidden = !pide;
+        celular.required = pide;
+        if (!pide) celular.value = '';
+      };
+      // reset() no dispara "change": se espera a que el formulario vuelva a sus valores iniciales
+      const alReiniciar = () => setTimeout(mostrarCelular);
+      canalSel.addEventListener('change', mostrarCelular);
+      formInteres.addEventListener('reset', alReiniciar);
+      mostrarCelular(); // por si el navegador restauró una opción al volver a la página
+      limpiar.push(() => {
+        canalSel.removeEventListener('change', mostrarCelular);
+        formInteres.removeEventListener('reset', alReiniciar);
+      });
+    }
+
     limpiar.push(
       conectar('form-interes', (f) => {
         const nombre = valor(f, 'nombre_completo').trim().replace(/\s+/g, ' ');
@@ -254,12 +282,19 @@ export default function LandingScripts() {
                 : 'El número de documento debe tener entre 5 y 12 letras o números.',
           };
         if (!EMAIL_RE.test(email)) return { error: 'Escribe un correo válido.' };
+        const canal = valor(f, 'canal_contacto');
+        const pideCelular = CANAL_CON_CELULAR.includes(canal);
+        const cel = pideCelular ? normalizarCelular(valor(f, 'celular')) : '';
+        if (pideCelular && !CELULAR_RE.test(cel))
+          return { error: 'Escribe tu celular: 10 dígitos que empiecen por 3.' };
         if (!autoriza) return { error: 'Para contactarte necesitamos tu autorización de tratamiento de datos.' };
         const datos: Record<string, unknown> = {
           nombre_completo: nombre,
           tipo_documento: tipo,
           numero_documento: numero,
           email,
+          canal_contacto: canal,
+          celular: cel,
           // Si el navegador restauró un mensaje con "Simulé …" sin simulación adjunta, la frase se ajusta a lo que se envía
           mensaje: conSimulacion(valor(f, 'mensaje').trim(), adjunta),
           autoriza_datos: true,
