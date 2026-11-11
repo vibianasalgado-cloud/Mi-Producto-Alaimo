@@ -20,6 +20,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - Los cambios en la base van como migración en supabase/migrations/ y los aplicas tú con la CLI de Supabase.
 - No cambies el diseño sin que te lo pida.
 - No hagas commits ni cargues datos de prueba sin que te lo pida.
+- Nunca trabajes directo en main. Para cada cambio, crea una rama desde main, publícala en GitHub y abre un pull request.
+- El merge a main lo hace la usuaria, desde GitHub. Tú nunca haces merge a main.
 - Es un prototipo: pagos e IA se simulan.
 
 ## Qué es
