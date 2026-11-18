@@ -57,7 +57,7 @@ Corre `npx tsc --noEmit` primero. Luego, con el servidor local (`preview_start` 
 3. Registra a B (`b@prueba.com`) y entra; confirma "(0)" y que `GET /api/<entidad>` devuelve `filas: []`.
 4. Opcional: con B crea uno y confirma que A sigue viendo solo los suyos.
 
-Notas: Supabase rechaza dominios sin MX (`test.com`, `example.com`); `prueba.com` funcionó. "Confirm email" está desactivado, así que el registro entra directo. Las contraseñas de prueba son solo para estas cuentas locales: no las repitas en respuestas salvo que las pidan, y si las cuentas ya existen, inicia sesión en vez de registrar.
+Notas: no confíes en que Supabase rechace un dominio (el 12/11/2026 `nadie@test.com` se registró sin error en desarrollo): cada registro crea una cuenta real; `prueba.com` funcionó. "Confirm email" está desactivado, así que el registro entra directo. Las contraseñas de prueba son solo para estas cuentas locales: no las repitas en respuestas salvo que las pidan, y si las cuentas ya existen, inicia sesión en vez de registrar.
 
 ## Cierre
 
