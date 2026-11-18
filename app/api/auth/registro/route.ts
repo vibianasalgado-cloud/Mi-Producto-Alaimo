@@ -12,7 +12,12 @@ export async function POST(req: Request) {
 
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({ email, password });
-  if (error) return NextResponse.json({ error: 'No se pudo crear la cuenta: ' + error.message }, { status: 400 });
+  if (error) {
+    // Correo repetido: mensaje en español en vez del texto de Supabase
+    if (error.code === 'user_already_exists' || error.code === 'email_exists')
+      return NextResponse.json({ error: 'Ya existe una cuenta con ese correo. Entra con tu contraseña.' }, { status: 409 });
+    return NextResponse.json({ error: 'No se pudo crear la cuenta. Intenta de nuevo.' }, { status: 400 });
+  }
   if (!data.session) return NextResponse.json({ ok: true, confirmar: true });
   return NextResponse.json({ ok: true });
 }
