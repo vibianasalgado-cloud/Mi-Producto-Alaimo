@@ -27,9 +27,115 @@ type Interesado = Base & {
   quiere_ser_contactado: boolean;
   canal_contacto: string | null;
 };
-type Datos = { email: string; signups: Signup[]; feedback: Feedback[]; interesados: Interesado[] };
+type ContactoRapido = {
+  id: number;
+  created_at: string;
+  nombre_completo: string;
+  canal_contacto: string;
+  celular: string;
+  simulacion_monto: number;
+  simulacion_cuotas: number;
+  de_admin: boolean;
+};
+type Datos = {
+  email: string;
+  signups: Signup[];
+  feedback: Feedback[];
+  interesados: Interesado[];
+  contactosRapidos: ContactoRapido[];
+};
+type Flag = { clave: string; encendida: boolean; encendida_at: string | null; actualizada_at: string };
 
 const CANALES: Record<string, string> = { whatsapp: 'WhatsApp', llamada: 'Llamada', correo: 'Correo' };
+
+// Nombre legible de cada interruptor (la clave vive en la tabla feature_flags)
+const FLAGS: Record<string, { nombre: string; detalle: string }> = {
+  contacto_rapido_simulador: {
+    nombre: 'Contacto rápido desde el simulador',
+    detalle: 'Formulario corto (nombre, celular y canal) en el resultado del simulador. Experimento: product/hypotheses/contacto-rapido-simulador.md',
+  },
+};
+
+function Interruptores() {
+  const [flags, setFlags] = useState<Flag[] | null>(null);
+  const [error, setError] = useState('');
+  const [cambiando, setCambiando] = useState('');
+
+  useEffect(() => {
+    (async () => {
+      const res = await fetch('/api/admin/flags');
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) return setError(j.error || 'No se pudieron cargar los interruptores.');
+      setFlags(j.flags);
+    })();
+  }, []);
+
+  async function cambiar(f: Flag) {
+    const nombre = FLAGS[f.clave]?.nombre ?? f.clave;
+    const pregunta = f.encendida
+      ? `¿Apagar "${nombre}"? La landing vuelve a como estaba al refrescar.`
+      : `¿Encender "${nombre}"? Los visitantes la verán al refrescar la landing y las métricas del experimento contarán desde ahora.`;
+    if (!window.confirm(pregunta)) return;
+    setCambiando(f.clave);
+    setError('');
+    const res = await fetch('/api/admin/flags', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ clave: f.clave, encendida: !f.encendida }),
+    });
+    const j = await res.json().catch(() => ({}));
+    setCambiando('');
+    if (!res.ok) return setError(j.error || 'No se pudo cambiar el interruptor.');
+    setFlags((actuales) => actuales?.map((x) => (x.clave === f.clave ? j.flag : x)) ?? null);
+  }
+
+  return (
+    <section className="block">
+      <div className="block-head">
+        <h2>Interruptores</h2>
+        <span className="count">El cambio se ve al refrescar la landing</span>
+      </div>
+      {error && <p className="msg err">{error}</p>}
+      <div className="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>Estado</th>
+              <th>Encendida por última vez</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {flags?.length === 0 && <Vacio cols={4} />}
+            {flags?.map((f) => (
+              <tr key={f.clave}>
+                <td className="mensaje">
+                  <strong>{FLAGS[f.clave]?.nombre ?? f.clave}</strong>
+                  {FLAGS[f.clave] && <div className="count">{FLAGS[f.clave].detalle}</div>}
+                </td>
+                <td>{f.encendida ? 'Encendida' : 'Apagada'}</td>
+                <td className="fecha">{f.encendida_at ? fmt(f.encendida_at) : 'Nunca'}</td>
+                <td>
+                  <button
+                    type="button"
+                    className={f.encendida ? 'btn btn-ghost' : 'btn btn-primary'}
+                    role="switch"
+                    aria-checked={f.encendida}
+                    disabled={cambiando === f.clave}
+                    onClick={() => cambiar(f)}
+                  >
+                    {f.encendida ? 'Apagar' : 'Encender'}
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </section>
+  );
+}
 
 const fmt = (iso: string) => new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short' });
 
@@ -79,6 +185,26 @@ function descargarCsv(filas: Signup[]) {
   const a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
   a.download = 'signups.csv';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+
+function descargarCsvRapidos(filas: ContactoRapido[]) {
+  const columnas = ['id', 'nombre_completo', 'canal_contacto', 'celular', 'simulacion_monto', 'simulacion_cuotas', 'prueba_admin', 'fecha'];
+  const lineas = [columnas.map(csvCell).join(',')];
+  filas.forEach((r) =>
+    lineas.push(
+      [r.id, r.nombre_completo, r.canal_contacto, r.celular, r.simulacion_monto, r.simulacion_cuotas, r.de_admin ? 'sí' : 'no', r.created_at]
+        .map(csvCell)
+        .join(','),
+    ),
+  );
+  const blob = new Blob(['﻿' + lineas.join('\r\n')], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'contactos_rapidos.csv';
   document.body.appendChild(a);
   a.click();
   a.remove();
@@ -138,6 +264,49 @@ export default function Admin() {
 
       {datos && (
         <>
+          <Interruptores />
+
+          <section className="block">
+            <div className="block-head">
+              <h2>
+                Contactos rápidos <span className="count">({datos.contactosRapidos.length})</span>
+              </h2>
+              <button type="button" className="btn btn-primary" onClick={() => descargarCsvRapidos(datos.contactosRapidos)}>
+                Descargar CSV
+              </button>
+            </div>
+            <div className="table-wrap">
+              <table>
+                <thead>
+                  <tr>
+                    <th>Fecha</th>
+                    <th>Nombre</th>
+                    <th>Canal</th>
+                    <th>Celular</th>
+                    <th>Simulación</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {datos.contactosRapidos.length === 0 && <Vacio cols={5} />}
+                  {datos.contactosRapidos.map((r) => (
+                    <tr key={r.id}>
+                      <td className="fecha">
+                        {fmt(r.created_at)}
+                        {r.de_admin && <span className="count"> (prueba admin)</span>}
+                      </td>
+                      <td>{r.nombre_completo}</td>
+                      <td>{CANALES[r.canal_contacto] || r.canal_contacto}</td>
+                      <td className="fecha">{r.celular}</td>
+                      <td className="fecha">
+                        ${r.simulacion_monto.toLocaleString('es-CO')} · {r.simulacion_cuotas} cuotas
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </section>
+
           <section className="block">
             <div className="block-head">
               <h2>

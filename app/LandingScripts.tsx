@@ -4,7 +4,7 @@ import { useEffect } from 'react';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-type Armado = { error?: string; url?: string; datos?: Record<string, unknown> };
+type Armado = { error?: string; url?: string; datos?: Record<string, unknown>; ok?: string };
 
 function conectar(formId: string, armar: (f: HTMLFormElement) => Armado): () => void {
   const form = document.getElementById(formId) as HTMLFormElement | null;
@@ -32,7 +32,7 @@ function conectar(formId: string, armar: (f: HTMLFormElement) => Armado): () => 
         const j = await res.json().catch(() => ({}));
         decir(j.error || 'No pudimos enviar tu mensaje. Intenta de nuevo.', 'err');
       } else {
-        decir('¡Listo, gracias! Recibimos tu mensaje.', 'ok');
+        decir(armado.ok ?? '¡Listo, gracias! Recibimos tu mensaje.', 'ok');
         form!.reset();
       }
     } catch {
@@ -211,6 +211,38 @@ export default function LandingScripts() {
         ev.preventDefault();
         if (document.activeElement === montoCampo) normalizarCampo();
       };
+
+      // Experimento "contacto rápido": el formulario corto solo existe con el interruptor encendido
+      // (app/page.tsx); envía la simulación que la persona ve en pantalla.
+      if (document.getElementById('form-contacto-rapido')) {
+        limpiar.push(
+          conectar('form-contacto-rapido', (f) => {
+            const nombre = valor(f, 'nombre_completo').trim().replace(/\s+/g, ' ');
+            const canal = (f.querySelector('input[name="canal_contacto"]:checked') as HTMLInputElement | null)?.value ?? '';
+            const cel = normalizarCelular(valor(f, 'celular'));
+            const autoriza = (f.elements.namedItem('autoriza_datos') as HTMLInputElement).checked;
+            if ([...nombre].length < 3) return { error: 'Escribe tu nombre: al menos 3 letras.' };
+            if (!CANAL_CON_CELULAR.includes(canal)) return { error: 'Elige WhatsApp o llamada.' };
+            if (!CELULAR_RE.test(cel)) return { error: 'Escribe tu celular: 10 dígitos que empiecen por 3.' };
+            if (!autoriza) return { error: 'Para contactarte necesitamos tu autorización de tratamiento de datos.' };
+            registrar();
+            const s = actual();
+            return {
+              ok: `¡Listo! Te contactaremos por ${canal === 'whatsapp' ? 'WhatsApp' : 'llamada'} sobre tu simulación de ${resumenSim(s)}.`,
+              url: '/api/contacto-rapido',
+              datos: {
+                nombre_completo: nombre,
+                canal_contacto: canal,
+                celular: cel,
+                autoriza_datos: true,
+                simulacion_monto: s.monto,
+                simulacion_cuotas: s.cuotas,
+                website: valor(f, 'website'),
+              },
+            };
+          }),
+        );
+      }
 
       pintar();
       sim.addEventListener('input', alCambiar);

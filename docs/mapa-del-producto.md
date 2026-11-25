@@ -13,6 +13,7 @@ Las rutas de los enlaces son relativas a esta carpeta (`docs/`).
 - **Una página pública que enseña el producto.** Explica dónde se usa (datáfono Redeban y tiendas online), que Nequi le paga al comercio y no al cliente, cómo se compra, cómo se paga, en qué marcas sirve y las preguntas frecuentes ([app/_landing/body.html](../app/_landing/body.html): secciones `#donde-usar` l. 77, `#tu-dinero` l. 109, `#como-funciona` l. 166, `#forma-de-pago` l. 244, `#comercios` l. 287, `#preguntas` l. 317).
 - **Un simulador de cuotas.** La persona elige un monto y un número de cuotas y ve la cuota mensual. La tasa es de ejemplo (2 % mensual), no la real ([app/LandingScripts.tsx:55-61](../app/LandingScripts.tsx); controles en [body.html:389-406](../app/_landing/body.html)).
 - **Un formulario "quiero que me contacten".** Pide nombre, documento, correo, canal preferido (WhatsApp, llamada o correo), celular si elige WhatsApp o llamada, y la autorización de tratamiento de datos. Puede llevar adjunta la simulación ([body.html:431-475](../app/_landing/body.html), [app/api/interes/route.ts](../app/api/interes/route.ts)).
+- **Un formulario corto de contacto en el simulador (experimento, detrás de un interruptor).** Con el interruptor `contacto_rapido_simulador` encendido, la tarjeta del simulador pide solo nombre, canal (WhatsApp o llamada), celular y autorización, y adjunta la simulación; el botón que bajaba al formulario largo queda como enlace secundario. Apagado, la landing es la de siempre ([app/page.tsx](../app/page.tsx), [app/_landing/contacto-rapido.html](../app/_landing/contacto-rapido.html), [app/api/contacto-rapido/route.ts](../app/api/contacto-rapido/route.ts)). Ver la sección 5.
 - **Un formulario de comentarios sobre la página** ([body.html:366-376](../app/_landing/body.html), [app/api/feedback/route.ts](../app/api/feedback/route.ts)).
 - **Cuentas de usuario.** Quien crea una cuenta puede dejar uno o varios registros de "qué financiación busco" y editarlos ([app/mi-cuenta/page.tsx](../app/mi-cuenta/page.tsx)).
 - **Un panel para el equipo (admin).** Muestra todo lo que dejó la gente, permite descargar CSV y tiene un tablero de métricas para decidir si la hipótesis se sostiene ([app/admin/page.tsx](../app/admin/page.tsx), [app/admin/metricas/page.tsx](../app/admin/metricas/page.tsx)).
@@ -28,13 +29,13 @@ Lo que el código **no** hace: no otorga créditos, no cobra y no contacta a nad
 
 | Ruta | Qué es | Archivo |
 |---|---|---|
-| `/` | La landing pública. Inserta el HTML original y le suma los scripts | [app/page.tsx](../app/page.tsx) → [app/_landing/body.html](../app/_landing/body.html) + [app/LandingScripts.tsx](../app/LandingScripts.tsx) |
+| `/` | La landing pública. Inserta el HTML original y le suma los scripts. Lee el interruptor en cada visita y, si está encendido, agrega el formulario corto | [app/page.tsx](../app/page.tsx) → [app/_landing/body.html](../app/_landing/body.html) (+ [contacto-rapido.html](../app/_landing/contacto-rapido.html)) + [app/LandingScripts.tsx](../app/LandingScripts.tsx) |
 | `/registro` | Crear cuenta con correo y contraseña | [app/registro/page.tsx](../app/registro/page.tsx) → [app/AuthForm.tsx](../app/AuthForm.tsx) |
 | `/login` | Entrar | [app/login/page.tsx](../app/login/page.tsx) → [app/AuthForm.tsx](../app/AuthForm.tsx) |
 | `/mi-cuenta` | Formulario y lista de los registros propios, con opción de editarlos | [app/mi-cuenta/page.tsx](../app/mi-cuenta/page.tsx) |
 | `/mis-comentarios` | Comentarios propios del usuario con sesión. Ninguna página enlaza a esta ruta; solo aparece en el `matcher` de [proxy.ts:43](../proxy.ts) | [app/mis-comentarios/page.tsx](../app/mis-comentarios/page.tsx) |
-| `/admin` | Tablas de signups (agrupados por correo), interesados y feedback, más el botón "Descargar CSV" | [app/admin/page.tsx](../app/admin/page.tsx) (l. 143-150, 200, 240) |
-| `/admin/metricas` | Tablero de métricas: interés y contacto, landing, simulador y gráfico por semana | [app/admin/metricas/page.tsx](../app/admin/metricas/page.tsx) (l. 145, 175, 213, 250) |
+| `/admin` | Interruptores (encender y apagar features), contactos rápidos, tablas de signups (agrupados por correo), interesados y feedback, más el botón "Descargar CSV" | [app/admin/page.tsx](../app/admin/page.tsx) (componente `Interruptores`) |
+| `/admin/metricas` | Tablero de métricas: interés y contacto, landing, simulador, experimento "contacto rápido" y gráfico por semana | [app/admin/metricas/page.tsx](../app/admin/metricas/page.tsx) |
 
 Piezas compartidas:
 
@@ -57,7 +58,9 @@ Piezas compartidas:
 | `POST /api/feedback` | Comentarios de la landing | Guarda en `feedback`. Es pública | [route.ts](../app/api/feedback/route.ts) |
 | `POST /api/visitas-landing` | Al abrir la landing ([LandingScripts.tsx:78](../app/LandingScripts.tsx)) | Una fila por visitante anónimo y día en `landing_visits` | [route.ts](../app/api/visitas-landing/route.ts) |
 | `POST /api/simulaciones` | Primer uso del simulador ([LandingScripts.tsx:134](../app/LandingScripts.tsx)) | Una fila por visitante y día en `simulaciones` | [route.ts](../app/api/simulaciones/route.ts) |
-| `GET /api/admin/datos` | `/admin` | Lee `signups`, `feedback` e `interesados` con la llave secreta. Solo admin | [route.ts](../app/api/admin/datos/route.ts) |
+| `POST /api/contacto-rapido` | Formulario corto del simulador | Valida y guarda en `contactos_rapidos`. Pública, pero responde 404 con el interruptor apagado | [route.ts](../app/api/contacto-rapido/route.ts) |
+| `GET /api/admin/datos` | `/admin` | Lee `signups`, `feedback`, `interesados` y `contactos_rapidos` con la llave secreta. Solo admin | [route.ts](../app/api/admin/datos/route.ts) |
+| `GET/PATCH /api/admin/flags` | `/admin` (Interruptores) | Lista los interruptores y enciende o apaga uno; al encender guarda `encendida_at`. Llave secreta. Solo admin | [route.ts](../app/api/admin/flags/route.ts) |
 | `GET /api/admin/metricas` | `/admin/metricas` | Calcula las métricas con la llave secreta. Solo admin | [route.ts](../app/api/admin/metricas/route.ts) |
 
 ### Librerías y seguridad
@@ -67,6 +70,7 @@ Piezas compartidas:
 - [lib/admin.ts](../lib/admin.ts): `isAdmin()` compara el correo, sin distinguir mayúsculas, con `ADMIN_EMAILS`.
 - [lib/visitante.ts](../lib/visitante.ts): cookie anónima `vid` (un UUID que dura un año); excluye bots y al admin.
 - [lib/validar.ts](../lib/validar.ts): formato de correo.
+- [lib/flags.ts](../lib/flags.ts): `featureEncendida(clave)` pregunta a la base si un interruptor está encendido (con la llave pública, vía la función `feature_encendida`); ante un error responde "apagado".
 - [proxy.ts](../proxy.ts): antes de abrir `/mi-cuenta`, `/mis-comentarios` y `/admin`, refresca la sesión. Sin sesión manda a `/login?next=…` (l. 28-33); si no es admin, de `/admin` manda a `/mi-cuenta` (l. 34-39). Las API vuelven a comprobar por su cuenta, por ejemplo [app/api/admin/datos/route.ts:9-10](../app/api/admin/datos/route.ts).
 
 ### Base de datos (Supabase, carpeta [supabase/migrations/](../supabase/migrations/))
@@ -80,6 +84,8 @@ Piezas compartidas:
 | `visits` | Un día de uso por usuario (hora de Bogotá) | Cada usuario lo suyo; el admin lee todo | [20261015142201_visits.sql](../supabase/migrations/20261015142201_visits.sql) |
 | `landing_visits` | Un día de visita por visitante anónimo | Cualquiera inserta solo el día de hoy; solo el admin lee | [20261015144419_landing_visits.sql](../supabase/migrations/20261015144419_landing_visits.sql) |
 | `simulaciones` | Un día de uso del simulador por visitante (sin montos) | Cualquiera inserta solo el día de hoy; solo el admin lee | [20261022141947_simulador.sql](../supabase/migrations/20261022141947_simulador.sql) |
+| `feature_flags` | Interruptores de features: `clave`, `encendida` (apagada por defecto), `encendida_at` (última vez que se encendió), `primera_encendida_at` (primera vez; ahí termina la línea base) y `actualizada_at`. Hoy tiene una fila: `contacto_rapido_simulador` | RLS sin políticas: con la llave pública nadie la lee ni la cambia; solo las rutas de `/api/admin` con la llave secreta. La landing solo puede preguntar "¿está encendida?" con la función `feature_encendida(clave)` | [20261119144738_interruptores_contacto_rapido.sql](../supabase/migrations/20261119144738_interruptores_contacto_rapido.sql) |
+| `contactos_rapidos` | Envíos del formulario corto del simulador: nombre, canal, celular, simulación, `visitor_id`, autorización y `de_admin` (sin documento ni correo) | Cualquiera inserta solo con el interruptor encendido; solo el admin lee | [20261119144738_interruptores_contacto_rapido.sql](../supabase/migrations/20261119144738_interruptores_contacto_rapido.sql) |
 
 Las políticas "admin lee" comparan con un correo fijo escrito en cada migración (por ejemplo [20261008143342_interesados.sql:27-30](../supabase/migrations/20261008143342_interesados.sql)), además de `ADMIN_EMAILS`.
 
@@ -165,3 +171,32 @@ Es probable porque es la entidad principal del producto, y ya se le agregó el c
 | Si cambia una métrica, por ejemplo "intención concreta" | [app/api/admin/metricas/route.ts](../app/api/admin/metricas/route.ts) (columnas leídas l. 53-56) y la tabla de métricas de [CLAUDE.md](../CLAUDE.md) |
 
 Si en vez de un dato se quiere una **tabla nueva por usuario**, la receta está en [.claude/skills/nueva-entidad/SKILL.md](../.claude/skills/nueva-entidad/SKILL.md). Esa receta cita como modelo `supabase/migrations/20261008120000_interesados.sql`, pero el archivo real se llama [20261008143342_interesados.sql](../supabase/migrations/20261008143342_interesados.sql).
+
+---
+
+## 5. Experimentos e interruptores
+
+Las features nuevas se prueban como experimentos: una hipótesis con un número que la valida o la descarta, un plan de exposición por niveles y un interruptor para encender cada nivel sin redesplegar.
+
+### Dónde están la hipótesis y el plan
+
+- **Hipótesis:** [product/hypotheses/contacto-rapido-simulador.md](../product/hypotheses/contacto-rapido-simulador.md). Quienes simulan piden más contacto si pueden hacerlo desde el simulador con solo nombre, celular y canal. Se cumple con ≥ 25 % y ≥ 1,5 × la línea base; falla con < 10 % o sin superar la línea base.
+- **Plan de exposición:** [product/exposure-plans/2026-11-19-0937-contacto-rapido-simulador.md](../product/exposure-plans/2026-11-19-0937-contacto-rapido-simulador.md). Tres niveles; hoy solo está construido el **nivel 1** (formulario corto).
+
+### Cómo funciona el interruptor
+
+1. La fila `contacto_rapido_simulador` de `feature_flags` nace apagada ([migración](../supabase/migrations/20261119144738_interruptores_contacto_rapido.sql)).
+2. El admin la enciende o apaga en `/admin`, sección "Interruptores" ([app/admin/page.tsx](../app/admin/page.tsx) → [app/api/admin/flags/route.ts](../app/api/admin/flags/route.ts)). Al encender se guarda `encendida_at` (y `primera_encendida_at` la primera vez). Pulsar dos veces o desde una pestaña desactualizada no cambia las fechas: solo cuenta un cambio real de estado.
+3. En cada visita, [app/page.tsx](../app/page.tsx) pregunta con [lib/flags.ts](../lib/flags.ts) si está encendida (la página no se guarda en caché: `connection()`). Si la base tarda más de 1,5 s o falla, se toma como apagada. Si lo está, cambia el marcador `<!-- contacto-rapido -->` de [body.html](../app/_landing/body.html) por [contacto-rapido.html](../app/_landing/contacto-rapido.html) y el botón del simulador por un enlace al formulario largo. Al cambiar el interruptor, la landing cambia al refrescar.
+4. Apagado, la ruta [`/api/contacto-rapido`](../app/api/contacto-rapido/route.ts) responde 404 y la política de insert de `contactos_rapidos` rechaza filas: hay dos defensas.
+
+### La señal en `/admin/metricas`
+
+Sección "Experimento: contacto rápido desde el simulador", calculada en [app/api/admin/metricas/route.ts](../app/api/admin/metricas/route.ts) (bloque `experimento`):
+
+- **Ventana:** desde `encendida_at` hasta ahora; si está apagado, hasta que se apagó (`actualizada_at`). Si se vuelve a encender, cuenta desde el nuevo encendido.
+- **Señal:** visitantes que simularon en la ventana (`simulaciones.created_at`, más quienes enviaron el formulario corto) y dejaron sus datos en la ventana con el mismo `visitor_id`, por el formulario corto o el largo con simulación. Muestra cuántos por cada formulario. No cuenta envíos del admin. El divisor es una aproximación por horario: no se marca qué visitas vieron el formulario corto.
+- **Línea base:** la misma tasa antes del **primer** encendido, solo con el formulario largo.
+- **Decisión:** aplica la regla de la hipótesis (avanzar, iterar o parar) solo con al menos 100 visitantes en la ventana y con línea base; antes muestra "Muestra insuficiente" o "Sin línea base" y lo que diría la regla con los datos de hoy. También muestra los días que lleva encendido (de 14).
+- La tarjeta general "Simularon y dejaron sus datos" sigue contando solo el formulario largo; con el experimento encendido lo avisa.
+- `/admin` permite descargar los contactos rápidos en CSV.
