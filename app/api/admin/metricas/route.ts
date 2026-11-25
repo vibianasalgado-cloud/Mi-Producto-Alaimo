@@ -141,9 +141,11 @@ export async function GET() {
   const cortoVentana = visitantesDe(rapidos.filter((r) => enVentana(r.created_at)));
   const largoVentana = visitantesDe(conSimulacion.filter((s) => enVentana(s.created_at)));
   // simulaciones guarda una fila por visitante y día con la hora de la primera simulación: quien simuló
-  // ese mismo día antes de encender y luego envió el formulario corto (que exige una simulación) igual cuenta.
+  // ese mismo día antes de encender y luego envió cualquiera de los dos formularios con simulación
+  // (los dos exigen haber simulado) igual cuenta. Se suman los dos para no inclinar la señal hacia el corto.
   const simVentana = visitantesDe(simulaciones.filter((s) => enVentana(s.created_at)));
   cortoVentana.forEach((v) => simVentana.add(v));
+  largoVentana.forEach((v) => simVentana.add(v));
   const dejaronVentana = [...simVentana].filter((v) => cortoVentana.has(v) || largoVentana.has(v)).length;
   const pctVentana = pct(dejaronVentana, simVentana.size);
 

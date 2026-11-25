@@ -195,7 +195,7 @@ Las features nuevas se prueban como experimentos: una hipótesis con un número 
 Sección "Experimento: contacto rápido desde el simulador", calculada en [app/api/admin/metricas/route.ts](../app/api/admin/metricas/route.ts) (bloque `experimento`):
 
 - **Ventana:** desde `encendida_at` hasta ahora; si está apagado, hasta que se apagó (`actualizada_at`). Si se vuelve a encender, cuenta desde el nuevo encendido.
-- **Señal:** visitantes que simularon en la ventana (`simulaciones.created_at`, más quienes enviaron el formulario corto) y dejaron sus datos en la ventana con el mismo `visitor_id`, por el formulario corto o el largo con simulación. Muestra cuántos por cada formulario. No cuenta envíos del admin. El divisor es una aproximación por horario: no se marca qué visitas vieron el formulario corto.
+- **Señal:** visitantes que simularon en la ventana (`simulaciones.created_at`, más quienes enviaron en la ventana el formulario corto o el largo con simulación) y dejaron sus datos en la ventana con el mismo `visitor_id`, por el formulario corto o el largo con simulación. Muestra cuántos por cada formulario. No cuenta envíos del admin. El divisor es una aproximación por horario: no se marca qué visitas vieron el formulario corto.
 - **Línea base:** la misma tasa antes del **primer** encendido, solo con el formulario largo.
 - **Decisión:** aplica la regla de la hipótesis (avanzar, iterar o parar) solo con al menos 100 visitantes en la ventana y con línea base; antes muestra "Muestra insuficiente" o "Sin línea base" y lo que diría la regla con los datos de hoy. También muestra los días que lleva encendido (de 14).
 - La tarjeta general "Simularon y dejaron sus datos" sigue contando solo el formulario largo; con el experimento encendido lo avisa.

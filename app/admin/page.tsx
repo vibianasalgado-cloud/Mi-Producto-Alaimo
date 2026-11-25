@@ -63,10 +63,14 @@ function Interruptores() {
 
   useEffect(() => {
     (async () => {
-      const res = await fetch('/api/admin/flags');
-      const j = await res.json().catch(() => ({}));
-      if (!res.ok) return setError(j.error || 'No se pudieron cargar los interruptores.');
-      setFlags(j.flags);
+      try {
+        const res = await fetch('/api/admin/flags');
+        const j = await res.json().catch(() => ({}));
+        if (!res.ok) return setError(j.error || 'No se pudieron cargar los interruptores.');
+        setFlags(j.flags);
+      } catch {
+        setError('No pudimos conectar para cargar los interruptores. Revisa tu conexión y recarga la página.');
+      }
     })();
   }, []);
 
@@ -78,15 +82,20 @@ function Interruptores() {
     if (!window.confirm(pregunta)) return;
     setCambiando(f.clave);
     setError('');
-    const res = await fetch('/api/admin/flags', {
-      method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ clave: f.clave, encendida: !f.encendida }),
-    });
-    const j = await res.json().catch(() => ({}));
-    setCambiando('');
-    if (!res.ok) return setError(j.error || 'No se pudo cambiar el interruptor.');
-    setFlags((actuales) => actuales?.map((x) => (x.clave === f.clave ? j.flag : x)) ?? null);
+    try {
+      const res = await fetch('/api/admin/flags', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ clave: f.clave, encendida: !f.encendida }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok) return setError(j.error || 'No se pudo cambiar el interruptor.');
+      setFlags((actuales) => actuales?.map((x) => (x.clave === f.clave ? j.flag : x)) ?? null);
+    } catch {
+      setError('No pudimos conectar: el interruptor no cambió. Revisa tu conexión e intenta de nuevo.');
+    } finally {
+      setCambiando('');
+    }
   }
 
   return (

@@ -534,6 +534,11 @@
   .sim-contacto-link{font-size:.88rem;font-weight:700;color:var(--magenta);text-align:center;text-decoration:underline;min-height:44px;display:flex;align-items:center;justify-content:center;}
   :root[data-theme="dark"] .sim-contacto-link{color:#FBBEDE;}
   :root[data-theme="dark"] .sim-rapido ::placeholder{color:rgba(255,255,255,0.6);}
+  :root[data-theme="dark"] .sim-rapido .form-msg.ok{color:#8FE3B0;}
+  :root[data-theme="dark"] .sim-rapido .form-msg.err{color:#FFB4B4;}
+  /* el encabezado fijo mide ~71px: al enfocar un campo con error queda visible debajo */
+  .sim-rapido input,.sim-rapido .form-msg{scroll-margin-top:80px;scroll-margin-bottom:16px;}
+  .sim-rapido input[aria-invalid="true"]{border-color:var(--magenta);}
   .sim-adjunta{
     display:flex;justify-content:space-between;align-items:center;gap:12px;
     font-size:.88rem;font-weight:600;color:#fff;

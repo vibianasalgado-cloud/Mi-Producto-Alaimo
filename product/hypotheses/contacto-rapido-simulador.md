@@ -17,7 +17,7 @@
 ## Experimento
 
 1. **Exposición mínima:** formulario corto dentro de la tarjeta de resultado del simulador, detrás de un feature flag. Con el flag apagado la landing queda igual que hoy. Los niveles y a quién se muestra cada uno van en el plan de exposición.
-2. **Instrumentación:** cada envío del formulario corto se guarda en `contactos_rapidos`, separado del formulario largo, con el `visitor_id` de la cookie `vid` y el monto y las cuotas simulados. El divisor se aproxima por horario: visitantes que simularon desde que se encendió el interruptor (más quienes enviaron el formulario corto, que exige simular). No se marca qué visitas vieron el formulario, así que una pestaña abierta antes de encender puede contar sin haberlo visto. La línea base usa los datos anteriores al primer encendido (`feature_flags.primera_encendida_at`).
+2. **Instrumentación:** cada envío del formulario corto se guarda en `contactos_rapidos`, separado del formulario largo, con el `visitor_id` de la cookie `vid` y el monto y las cuotas simulados. El divisor se aproxima por horario: visitantes que simularon desde que se encendió el interruptor (más quienes enviaron el formulario corto o el largo con simulación, que exigen simular). No se marca qué visitas vieron el formulario, así que una pestaña abierta antes de encender puede contar sin haberlo visto. La línea base usa los datos anteriores al primer encendido (`feature_flags.primera_encendida_at`).
 3. **Regla de decisión** (fijada antes de encender):
    - **Avanzar** (siguiente nivel del plan): ≥ 25 % y ≥ 1,5 × la línea base.
    - **Iterar** (ajustar textos o campos y repetir 2 semanas): entre 10 % y 25 %, o por encima de la línea base pero sin llegar a 1,5 ×.
