@@ -11,13 +11,19 @@ export async function GET() {
 
   const admin = createAdminClient();
   const pedir = (tabla: string) => admin.from(tabla).select('*').order('created_at', { ascending: false }).limit(1000);
-  const [signups, feedback, interesados] = await Promise.all([pedir('signups'), pedir('feedback'), pedir('interesados')]);
-  if (signups.error || feedback.error || interesados.error)
+  const [signups, feedback, interesados, contactosRapidos] = await Promise.all([
+    pedir('signups'),
+    pedir('feedback'),
+    pedir('interesados'),
+    pedir('contactos_rapidos'),
+  ]);
+  if (signups.error || feedback.error || interesados.error || contactosRapidos.error)
     return NextResponse.json({ error: 'No se pudieron cargar los datos.' }, { status: 500 });
   return NextResponse.json({
     email: data.user.email,
     signups: signups.data,
     feedback: feedback.data,
     interesados: interesados.data,
+    contactosRapidos: contactosRapidos.data,
   });
 }

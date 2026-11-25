@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isAdmin } from '@/lib/admin';
+import { CONTACTO_RAPIDO } from '@/lib/flags';
 
 const SEMANAS = 8;
 const DIA_MS = 24 * 60 * 60 * 1000;
@@ -49,26 +50,42 @@ export async function GET() {
     }
   }
 
-  const [interesados, visitas, visitasLanding, simulaciones, todosSignups] = await Promise.all([
+  const [interesados, visitas, visitasLanding, simulaciones, todosSignups, todosRapidos, flag] = await Promise.all([
     todas<{ user_id: string; quiere_ser_contactado: boolean; como_hacerlo: string | null; donde_comprar: string | null }>(
       'interesados',
       'user_id, quiere_ser_contactado, como_hacerlo, donde_comprar',
     ),
     todas<{ user_id: string; day: string }>('visits', 'user_id, day'),
     todas<{ visitor_id: string; day: string }>('landing_visits', 'visitor_id, day'),
-    todas<{ visitor_id: string; day: string }>('simulaciones', 'visitor_id, day'),
+    todas<{ visitor_id: string; day: string; created_at: string }>('simulaciones', 'visitor_id, day, created_at'),
     todas<{
       email: string;
       visitor_id: string | null;
       simulacion_monto: number | null;
       simulacion_cuotas: number | null;
       de_admin: boolean;
-    }>('signups', 'email, visitor_id, simulacion_monto, simulacion_cuotas, de_admin'),
+      created_at: string;
+    }>('signups', 'email, visitor_id, simulacion_monto, simulacion_cuotas, de_admin, created_at'),
+    todas<{ visitor_id: string | null; de_admin: boolean; created_at: string }>(
+      'contactos_rapidos',
+      'visitor_id, de_admin, created_at',
+    ),
+    admin
+      .from('feature_flags')
+      .select('encendida, encendida_at, primera_encendida_at, actualizada_at')
+      .eq('clave', CONTACTO_RAPIDO)
+      .maybeSingle<{
+        encendida: boolean;
+        encendida_at: string | null;
+        primera_encendida_at: string | null;
+        actualizada_at: string;
+      }>(),
   ]);
-  if (!interesados || !visitas || !visitasLanding || !simulaciones || !todosSignups)
+  if (!interesados || !visitas || !visitasLanding || !simulaciones || !todosSignups || !todosRapidos || flag.error)
     return NextResponse.json({ error: 'No se pudieron cargar las métricas.' }, { status: 500 });
   // Los envíos de prueba del admin no cuentan (igual que sus visitas y simulaciones)
   const signups = todosSignups.filter((s) => !s.de_admin);
+  const rapidos = todosRapidos.filter((r) => !r.de_admin);
 
   const total = usuarios.length;
   const ids = new Set(usuarios.map((u) => u.id));
@@ -100,6 +117,65 @@ export async function GET() {
   const simularonYDejaron = [...visitantesSim].filter((v) => visitantesConSim.has(v)).length;
   const desdeSim = simulaciones.reduce<string | null>((min, s) => (min === null || s.day < min ? s.day : min), null);
   const promedio = (ns: number[]) => (ns.length === 0 ? 0 : ns.reduce((a, b) => a + b, 0) / ns.length);
+
+  // Experimento "contacto rápido" (product/hypotheses/contacto-rapido-simulador.md).
+  // Ventana: desde la última vez que se encendió el interruptor hasta ahora (o hasta que se apagó).
+  // Señal: de los visitantes que simularon en la ventana, cuántos dejaron sus datos en la ventana
+  // (formulario corto, o largo con simulación adjunta). El divisor es una aproximación por horario:
+  // no se marca qué visitas vieron el formulario corto.
+  // Línea base: la misma tasa antes del PRIMER encendido (solo formulario largo), para que
+  // apagar y volver a encender no meta rondas anteriores del experimento en la línea base.
+  const f = flag.data;
+  const inicio = f?.encendida_at ? Date.parse(f.encendida_at) : null;
+  const primera = f?.primera_encendida_at ? Date.parse(f.primera_encendida_at) : inicio;
+  const fin = f && !f.encendida ? Date.parse(f.actualizada_at) : null;
+  const enVentana = (iso: string) => {
+    const t = Date.parse(iso);
+    return inicio !== null && t >= inicio && (fin === null || t <= fin);
+  };
+  const antes = (iso: string) => primera === null || Date.parse(iso) < primera;
+  const visitantesDe = <T extends { visitor_id: string | null }>(filas: T[]) =>
+    new Set(filas.map((r) => r.visitor_id).filter((v): v is string => v !== null));
+  const cuantos = (de: Set<string>, en: Set<string>) => [...de].filter((v) => en.has(v)).length;
+
+  const cortoVentana = visitantesDe(rapidos.filter((r) => enVentana(r.created_at)));
+  const largoVentana = visitantesDe(conSimulacion.filter((s) => enVentana(s.created_at)));
+  // simulaciones guarda una fila por visitante y día con la hora de la primera simulación: quien simuló
+  // ese mismo día antes de encender y luego envió cualquiera de los dos formularios con simulación
+  // (los dos exigen haber simulado) igual cuenta. Se suman los dos para no inclinar la señal hacia el corto.
+  const simVentana = visitantesDe(simulaciones.filter((s) => enVentana(s.created_at)));
+  cortoVentana.forEach((v) => simVentana.add(v));
+  largoVentana.forEach((v) => simVentana.add(v));
+  const dejaronVentana = [...simVentana].filter((v) => cortoVentana.has(v) || largoVentana.has(v)).length;
+  const pctVentana = pct(dejaronVentana, simVentana.size);
+
+  const simAntes = visitantesDe(simulaciones.filter((s) => antes(s.created_at)));
+  const largoAntes = visitantesDe(conSimulacion.filter((s) => antes(s.created_at)));
+  const dejaronAntes = cuantos(simAntes, largoAntes);
+  const pctAntes = pct(dejaronAntes, simAntes.size);
+
+  // Regla de decisión escrita en la hipótesis antes de encender. Sin la muestra mínima o sin línea base
+  // no se decide: se muestra lo que diría la regla hoy, como referencia.
+  const MUESTRA_MINIMA = 100;
+  const regla =
+    simVentana.size === 0
+      ? null
+      : pctVentana < 10 || pctVentana <= pctAntes
+        ? 'parar'
+        : pctVentana >= 25 && pctVentana >= 1.5 * pctAntes
+          ? 'avanzar'
+          : 'iterar';
+  const decision =
+    inicio === null
+      ? 'sin_iniciar'
+      : simVentana.size === 0
+        ? 'sin_datos'
+        : simAntes.size === 0
+          ? 'sin_linea_base'
+          : simVentana.size < MUESTRA_MINIMA
+            ? 'muestra_insuficiente'
+            : regla!;
+  const diasEncendido = inicio === null ? 0 : Math.floor(((fin ?? Date.now()) - inicio) / DIA_MS);
 
   const diasPorUsuario = new Map<string, Set<string>>();
   for (const v of visitas) {
@@ -154,6 +230,22 @@ export async function GET() {
       contactos: conSimulacion.length,
       montoPromedio: Math.round(promedio(conSimulacion.map((s) => s.simulacion_monto!))),
       cuotasPromedio: Math.round(promedio(conSimulacion.map((s) => s.simulacion_cuotas!)) * 10) / 10,
+    },
+    experimento: {
+      encendida: f?.encendida ?? false,
+      desde: f?.encendida_at ?? null,
+      hasta: fin !== null ? f!.actualizada_at : null,
+      simularon: simVentana.size,
+      dejaronDatos: dejaronVentana,
+      pct: pctVentana,
+      corto: cuantos(simVentana, cortoVentana),
+      largo: cuantos(simVentana, largoVentana),
+      enviosCortos: rapidos.filter((r) => enVentana(r.created_at)).length,
+      base: { simularon: simAntes.size, dejaronDatos: dejaronAntes, pct: pctAntes, hasta: f?.primera_encendida_at ?? null },
+      muestraMinima: MUESTRA_MINIMA,
+      diasEncendido,
+      regla,
+      decision,
     },
     semanas: semanas.map((s) => ({ semana: s, nuevos: nuevos.get(s)!, activos: activos.get(s)!.size })),
   });

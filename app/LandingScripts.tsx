@@ -4,9 +4,12 @@ import { useEffect } from 'react';
 
 const EMAIL_RE = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-type Armado = { error?: string; url?: string; datos?: Record<string, unknown> };
+// campo: nombre del campo que falló, para enfocarlo y marcarlo (solo en formularios con conFoco)
+type Armado = { error?: string; url?: string; datos?: Record<string, unknown>; ok?: string; campo?: string };
 
-function conectar(formId: string, armar: (f: HTMLFormElement) => Armado): () => void {
+// conFoco: al fallar la validación enfoca y marca el campo con error, y lleva el mensaje a la vista
+// (si se envía con "Ir" del teclado del celular, el mensaje podría quedar debajo del teclado).
+function conectar(formId: string, armar: (f: HTMLFormElement) => Armado, conFoco = false): () => void {
   const form = document.getElementById(formId) as HTMLFormElement | null;
   if (!form) return () => {};
   const btn = form.querySelector('button[type="submit"]') as HTMLButtonElement;
@@ -14,12 +17,27 @@ function conectar(formId: string, armar: (f: HTMLFormElement) => Armado): () => 
   const decir = (texto: string, tipo?: string) => {
     msg.textContent = texto;
     msg.className = 'form-msg' + (tipo ? ' ' + tipo : '');
+    if (conFoco && tipo) msg.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
   };
+  const limpiarMarcas = () =>
+    form.querySelectorAll('[aria-invalid="true"]').forEach((el) => {
+      el.removeAttribute('aria-invalid');
+      el.removeAttribute('aria-describedby');
+    });
 
   async function enviar(ev: Event) {
     ev.preventDefault();
     const armado = armar(form!);
-    if (armado.error) return decir(armado.error, 'err');
+    if (conFoco) limpiarMarcas();
+    if (armado.error) {
+      const campo = conFoco && armado.campo ? form!.elements.namedItem(armado.campo) : null;
+      if (campo instanceof HTMLInputElement) {
+        campo.setAttribute('aria-invalid', 'true');
+        if (msg.id) campo.setAttribute('aria-describedby', msg.id);
+        campo.focus({ preventScroll: true });
+      }
+      return decir(armado.error, 'err');
+    }
     btn.disabled = true;
     decir('Enviando…');
     try {
@@ -32,7 +50,7 @@ function conectar(formId: string, armar: (f: HTMLFormElement) => Armado): () => 
         const j = await res.json().catch(() => ({}));
         decir(j.error || 'No pudimos enviar tu mensaje. Intenta de nuevo.', 'err');
       } else {
-        decir('¡Listo, gracias! Recibimos tu mensaje.', 'ok');
+        decir(armado.ok ?? '¡Listo, gracias! Recibimos tu mensaje.', 'ok');
         form!.reset();
       }
     } catch {
@@ -211,6 +229,39 @@ export default function LandingScripts() {
         ev.preventDefault();
         if (document.activeElement === montoCampo) normalizarCampo();
       };
+
+      // Experimento "contacto rápido": el formulario corto solo existe con el interruptor encendido
+      // (app/page.tsx); envía la simulación que la persona ve en pantalla.
+      if (document.getElementById('form-contacto-rapido')) {
+        limpiar.push(
+          conectar('form-contacto-rapido', (f) => {
+            const nombre = valor(f, 'nombre_completo').trim().replace(/\s+/g, ' ');
+            const canal = (f.querySelector('input[name="canal_contacto"]:checked') as HTMLInputElement | null)?.value ?? '';
+            const cel = normalizarCelular(valor(f, 'celular'));
+            const autoriza = (f.elements.namedItem('autoriza_datos') as HTMLInputElement).checked;
+            if ([...nombre].length < 3) return { error: 'Escribe tu nombre: al menos 3 letras.', campo: 'nombre_completo' };
+            if (!CANAL_CON_CELULAR.includes(canal)) return { error: 'Elige WhatsApp o llamada.' };
+            if (!CELULAR_RE.test(cel)) return { error: 'Escribe tu celular: 10 dígitos que empiecen por 3.', campo: 'celular' };
+            if (!autoriza)
+              return { error: 'Para contactarte necesitamos tu autorización de tratamiento de datos.', campo: 'autoriza_datos' };
+            registrar();
+            const s = actual();
+            return {
+              ok: `¡Listo! Te contactaremos por ${canal === 'whatsapp' ? 'WhatsApp' : 'llamada'} sobre tu simulación de ${resumenSim(s)}.`,
+              url: '/api/contacto-rapido',
+              datos: {
+                nombre_completo: nombre,
+                canal_contacto: canal,
+                celular: cel,
+                autoriza_datos: true,
+                simulacion_monto: s.monto,
+                simulacion_cuotas: s.cuotas,
+                website: valor(f, 'website'),
+              },
+            };
+          }, true),
+        );
+      }
 
       pintar();
       sim.addEventListener('input', alCambiar);

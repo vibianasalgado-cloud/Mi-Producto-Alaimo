@@ -1,0 +1,24 @@
+<form class="form sim-rapido" id="form-contacto-rapido" novalidate>
+          <h3>¿Te contactamos con esta simulación?</h3>
+          <label for="rap-nombre">Tu nombre</label>
+          <input type="text" id="rap-nombre" name="nombre_completo" maxlength="120" required autocomplete="name" placeholder="Nombre y apellido">
+          <fieldset class="sim-field">
+            <legend>¿Por dónde te contactamos?</legend>
+            <div class="sim-pills">
+              <label class="sim-pill"><input type="radio" name="canal_contacto" value="whatsapp" checked><span>WhatsApp</span></label>
+              <label class="sim-pill"><input type="radio" name="canal_contacto" value="llamada"><span>Llamada</span></label>
+            </div>
+          </fieldset>
+          <label for="rap-celular">Celular</label>
+          <input type="text" id="rap-celular" name="celular" inputmode="tel" maxlength="20" required autocomplete="tel-national" placeholder="Ej: 3001234567">
+          <label class="form-check" for="rap-autoriza">
+            <input type="checkbox" id="rap-autoriza" name="autoriza_datos" required>
+            <span>
+              Autorizo el tratamiento de datos.
+              <span class="revisar">REVISAR con Legal: texto de autorización y enlace a la política</span>
+            </span>
+          </label>
+          <div class="hp" aria-hidden="true"><input type="text" name="website" tabindex="-1" autocomplete="off"></div>
+          <button type="submit" class="btn btn-primary">Quiero que me contacten</button>
+          <p class="form-msg" id="rap-msg" role="status" aria-live="polite"></p>
+        </form>

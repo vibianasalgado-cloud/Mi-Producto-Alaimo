@@ -36,8 +36,37 @@ type Metricas = {
     montoPromedio: number;
     cuotasPromedio: number;
   };
+  experimento: {
+    encendida: boolean;
+    desde: string | null;
+    hasta: string | null;
+    simularon: number;
+    dejaronDatos: number;
+    pct: number;
+    corto: number;
+    largo: number;
+    enviosCortos: number;
+    base: { simularon: number; dejaronDatos: number; pct: number; hasta: string | null };
+    muestraMinima: number;
+    diasEncendido: number;
+    regla: 'parar' | 'iterar' | 'avanzar' | null;
+    decision: 'sin_iniciar' | 'sin_datos' | 'sin_linea_base' | 'muestra_insuficiente' | 'parar' | 'iterar' | 'avanzar';
+  };
   semanas: Semana[];
 };
+
+const DECISION: Record<Metricas['experimento']['decision'], string> = {
+  sin_iniciar: 'Aún no se ha encendido',
+  sin_datos: 'Sin simulaciones desde que se encendió',
+  sin_linea_base: 'Sin línea base',
+  muestra_insuficiente: 'Muestra insuficiente',
+  parar: 'Parar',
+  iterar: 'Iterar',
+  avanzar: 'Avanzar al nivel 2',
+};
+const REGLA = { parar: 'parar', iterar: 'iterar', avanzar: 'avanzar' } as const;
+const fechaHora = (iso: string) =>
+  new Date(iso).toLocaleString('es-CO', { dateStyle: 'medium', timeStyle: 'short', timeZone: 'America/Bogota' });
 
 const pct = (n: number) => n.toLocaleString('es-CO', { maximumFractionDigits: 1 }) + ' %';
 const dia = (iso: string) => new Date(iso + 'T00:00:00').toLocaleDateString('es-CO', { day: 'numeric', month: 'short' });
@@ -229,6 +258,7 @@ export default function MetricasAdmin() {
                 <div className="sub">
                   {datos.simulador.dejaronDatos} de {datos.simulador.visitantes} que simularon enviaron sus datos con la simulación (mismo visitante);{' '}
                   {datos.simulador.contactos} de {datos.landing.envios} envíos traen simulación
+                  {datos.experimento.desde && '. Solo cuenta el formulario largo; el corto está en "Experimento"'}
                 </div>
               </div>
               <div className="stat">
@@ -240,6 +270,50 @@ export default function MetricasAdmin() {
                   {datos.simulador.contactos
                     ? `${datos.simulador.cuotasPromedio.toLocaleString('es-CO')} cuotas en promedio, de ${datos.simulador.contactos} solicitudes con simulación`
                     : 'Aún no hay solicitudes con simulación'}
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="block">
+            <div className="block-head">
+              <h2>Experimento: contacto rápido desde el simulador</h2>
+              <span className="count">
+                {datos.experimento.desde
+                  ? `${datos.experimento.encendida ? 'Encendido' : 'Apagado'} · cuenta desde el ${fechaHora(datos.experimento.desde)}` +
+                    (datos.experimento.hasta ? ` hasta el ${fechaHora(datos.experimento.hasta)}` : '')
+                  : 'El interruptor aún no se ha encendido'}
+              </span>
+            </div>
+            <div className="stats">
+              <div className="stat">
+                <div className="label">Simularon y dejaron sus datos (señal)</div>
+                <div className="value">{datos.experimento.simularon ? pct(datos.experimento.pct) : '—'}</div>
+                <div className="sub">
+                  {datos.experimento.dejaronDatos} de {datos.experimento.simularon} visitantes que simularon desde que se encendió:{' '}
+                  {datos.experimento.corto} con el formulario corto y {datos.experimento.largo} con el largo (alguien puede usar los dos)
+                </div>
+              </div>
+              <div className="stat">
+                <div className="label">Línea base (antes de encender)</div>
+                <div className="value">{datos.experimento.base.simularon ? pct(datos.experimento.base.pct) : '—'}</div>
+                <div className="sub">
+                  {datos.experimento.base.dejaronDatos} de {datos.experimento.base.simularon} que simularon dejaron sus datos con el
+                  formulario largo
+                  {datos.experimento.base.hasta && `, hasta el primer encendido (${fechaHora(datos.experimento.base.hasta)})`}
+                </div>
+              </div>
+              <div className="stat">
+                <div className="label">Decisión según la regla</div>
+                <div className="value">{DECISION[datos.experimento.decision]}</div>
+                <div className="sub">
+                  Avanzar: ≥ 25 % y ≥ 1,5 × la línea base. Parar: &lt; 10 % o sin superar la línea base. Si no, iterar. Se decide
+                  con al menos {datos.experimento.muestraMinima} visitantes y 2 semanas.
+                  {datos.experimento.desde &&
+                    ` Van ${datos.experimento.simularon} de ${datos.experimento.muestraMinima} visitantes y ${datos.experimento.diasEncendido} de 14 días.`}
+                  {datos.experimento.regla &&
+                    !['parar', 'iterar', 'avanzar'].includes(datos.experimento.decision) &&
+                    ` Con los datos de hoy, la regla diría: ${REGLA[datos.experimento.regla]}.`}
                 </div>
               </div>
             </div>

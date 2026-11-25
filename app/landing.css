@@ -526,6 +526,19 @@
   .sim-row span{color:var(--ink-soft);}
   .sim-note{font-size:.8rem;color:var(--ink-soft);line-height:1.5;}
   .sim-result .btn{margin-top:auto;text-align:center;}
+  /* experimento "contacto rápido": formulario corto dentro del resultado (solo con el interruptor encendido) */
+  .sim-rapido{max-width:none;padding-top:16px;border-top:1px dashed var(--line);}
+  .sim-rapido h3{font-size:1rem;font-weight:800;}
+  .sim-rapido .sim-pills{margin-top:8px;}
+  .sim-rapido .btn{margin-top:0;align-self:stretch;}
+  .sim-contacto-link{font-size:.88rem;font-weight:700;color:var(--magenta);text-align:center;text-decoration:underline;min-height:44px;display:flex;align-items:center;justify-content:center;}
+  :root[data-theme="dark"] .sim-contacto-link{color:#FBBEDE;}
+  :root[data-theme="dark"] .sim-rapido ::placeholder{color:rgba(255,255,255,0.6);}
+  :root[data-theme="dark"] .sim-rapido .form-msg.ok{color:#8FE3B0;}
+  :root[data-theme="dark"] .sim-rapido .form-msg.err{color:#FFB4B4;}
+  /* el encabezado fijo mide ~71px: al enfocar un campo con error queda visible debajo */
+  .sim-rapido input,.sim-rapido .form-msg{scroll-margin-top:80px;scroll-margin-bottom:16px;}
+  .sim-rapido input[aria-invalid="true"]{border-color:var(--magenta);}
   .sim-adjunta{
     display:flex;justify-content:space-between;align-items:center;gap:12px;
     font-size:.88rem;font-weight:600;color:#fff;
